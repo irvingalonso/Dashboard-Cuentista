@@ -1,0 +1,17 @@
+{
+  "_nota": "Parámetros del tablero semanal (spec de Carlos, 2026-09-25). Confirmar costos con finanzas antes de tomarlos como definitivos.",
+  "precio": {"fisico": 350, "digital": 99},
+  "produccion": {"fisico": 120, "digital": 15},
+  "stripe": {"fijo": 3, "porcentaje": 0.036},
+  "metas": {"cac": 200, "margen": 0, "roas": 2.0, "roas_60d": 1.5, "frecuencia": 3.0},
+  "alertas": {
+    "gasto_min_margen": 800,
+    "frecuencia_fatiga": 2.8, "frecuencia_sube": 0.25, "ctr_cae": 0.15,
+    "lpv_min": 0.70, "gasto_cambio": 0.30, "cobertura_min": 0.60
+  },
+  "etiquetas": {"cambio": 0.12, "pico": 1.8, "min_ventas": 3},
+  "min_casos_funnel": 20,
+  "semanas_tendencia": 6,
+  "_whatsapp_en_web": "Compras web que en realidad entraron por WhatsApp (link que manda el asesor). El canal se asigna por punto de entrada: cuentan como WhatsApp, no como Web.",
+  "whatsapp_en_web": [["cuentista", "sasu"], ["(referral)", "l.wl.co"]]
+}

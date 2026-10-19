@@ -1,0 +1,1470 @@
+<meta charset="utf-8">
+<title>Tablero Cuentista</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F4F5FA; --card:#FFFFFF; --ink:#18213D; --ink-2:#4A5372; --muted:#7C84A0; --line:#E2E5EF; --line-2:#EEF0F6;
+  --accent:#3346A8; --accent-soft:#E6E9F8;
+  --ia:#2F6FDB; --ia-soft:#E4EDFC; --avance:#17915F; --avance-soft:#E1F4EB;
+  --espera:#C97710; --espera-soft:#FBEFDC; --salida:#D03E57; --salida-soft:#FBE5E9;
+  --sinmedir:#A9AFC4;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Figtree", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#10142A; --card:#181E3C; --ink:#EEF0F8; --ink-2:#B7BDD6; --muted:#8990AE; --line:#2B3259; --line-2:#222849;
+    --accent:#93A2FF; --accent-soft:#252D5C;
+    --ia:#6199F2; --ia-soft:#1E2B55; --avance:#3CC08A; --avance-soft:#16352E;
+    --espera:#F0A445; --espera-soft:#3A2D1A; --salida:#F0697F; --salida-soft:#3E1D2A; --sinmedir:#5B6288;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#10142A; --card:#181E3C; --ink:#EEF0F8; --ink-2:#B7BDD6; --muted:#8990AE; --line:#2B3259; --line-2:#222849;
+  --accent:#93A2FF; --accent-soft:#252D5C;
+  --ia:#6199F2; --ia-soft:#1E2B55; --avance:#3CC08A; --avance-soft:#16352E;
+  --espera:#F0A445; --espera-soft:#3A2D1A; --salida:#F0697F; --salida-soft:#3E1D2A; --sinmedir:#5B6288;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:1240px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700}
+h3{font-size:16px;font-weight:700}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:13px}
+a{color:var(--accent)}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+
+/* ── cabecera ─────────────────────────────────────── */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);padding-block:14px 10px;border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+.top-in{max-width:1240px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-size:26px;font-weight:800;color:var(--accent)}
+.brand span{font-size:13px;color:var(--muted)}
+nav.tabs{display:flex;gap:4px;background:var(--line-2);padding:4px;border-radius:12px}
+nav.tabs button{border:0;background:none;padding:7px 14px;border-radius:9px;font-weight:600;color:var(--ink-2);cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,30,70,.12)}
+.filters{max-width:1240px;margin:10px auto 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{border:1px solid var(--line);background:var(--card);padding:5px 11px;border-radius:999px;font-size:13px;font-weight:500;cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{color:#10142A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{color:#10142A}}
+.filters input[type=date],.filters select,.ctl select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 8px;font-size:13px}
+.filters .sep{width:1px;height:20px;background:var(--line);margin-inline:4px}
+.rangelabel{font-size:13px;color:var(--muted);margin-left:auto}
+
+/* ── secciones ────────────────────────────────────── */
+section.tab{display:grid;gap:18px;margin-top:20px}
+.intro{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline}
+.intro p{margin:0;color:var(--ink-2);max-width:70ch}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.panel-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:14px}
+.panel-h p{margin:4px 0 0;color:var(--muted);font-size:13px;max-width:70ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:18px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:18px}
+
+/* hallazgos: lo primero que se lee */
+.findings{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:12px}
+.find{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:grid;gap:6px;align-content:start}
+.find .tag{justify-self:start;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
+.find.crit .tag{background:var(--salida-soft);color:var(--salida)}
+.find.warn .tag{background:var(--espera-soft);color:var(--espera)}
+.find.good .tag{background:var(--avance-soft);color:var(--avance)}
+.find.info .tag{background:var(--ia-soft);color:var(--ia)}
+.find b{font-family:var(--display);font-size:17px;line-height:1.25;font-weight:700}
+.find p{margin:0;color:var(--ink-2);font-size:13.5px}
+.find .do{font-size:13px;color:var(--ink);border-top:1px dashed var(--line);padding-top:6px;margin-top:2px}
+.find .do::before{content:"Qué hacer → ";font-weight:700;color:var(--accent)}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.kpi{background:var(--card);padding:14px 16px;display:grid;gap:2px;align-content:start}
+.kpi .l{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+.kpi .v{font-family:var(--display);font-variant-numeric:tabular-nums;font-size:26px;font-weight:700;line-height:1.1}
+.kpi .s{font-size:12px;color:var(--ink-2)}
+
+/* embudo por fases */
+.funnel{display:grid;gap:10px}
+.frow{display:grid;grid-template-columns:minmax(120px,190px) 1fr minmax(90px,120px);gap:12px;align-items:center}
+.frow .name{font-weight:600;font-size:14px;display:grid}
+.frow .name small{font-weight:500;color:var(--muted);font-size:12px}
+.bar{height:26px;background:var(--line-2);border-radius:6px;position:relative;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:6px 4px 4px 6px;display:block}
+.bar.none{background:repeating-linear-gradient(135deg,var(--line-2) 0 6px,transparent 6px 12px);border:1px dashed var(--sinmedir)}
+.frow .val{text-align:right;font-variant-numeric:tabular-nums}
+.frow .val b{font-family:var(--display);font-size:17px}
+.frow .val span{display:block;font-size:12px;color:var(--muted)}
+.drop{font-size:12px;color:var(--salida);font-weight:600;margin-left:calc(min(190px,34%) + 12px)}
+@media (max-width:560px){.frow{grid-template-columns:1fr auto}.frow .bar{grid-column:1/-1;grid-row:2}.drop{margin-left:0}}
+
+/* tarjetas de cadencia (como las del Miro) */
+.cad{border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;align-content:start}
+.cad h3{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;display:inline-block}
+.vs{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px}
+.vs dt{color:var(--muted)} .vs dd{margin:0;font-weight:600}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px;justify-self:start}
+.status.ok{background:var(--avance-soft);color:var(--avance)}
+.status.warn{background:var(--espera-soft);color:var(--espera)}
+.status.crit{background:var(--salida-soft);color:var(--salida)}
+.status.na{background:var(--line-2);color:var(--muted)}
+
+/* listas con barras */
+.blist{display:grid;gap:8px}
+.bl{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,2fr) auto;gap:10px;align-items:center;font-size:13.5px}
+.bl .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bl .b{height:10px;background:var(--line-2);border-radius:4px;overflow:hidden}
+.bl .b i{display:block;height:100%;border-radius:4px}
+.bl .v{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+
+/* tablas */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line-2);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:600;background:var(--line-2);position:sticky;top:0}
+tbody tr:last-child td{border-bottom:0}
+td.name{max-width:320px;overflow:hidden;text-overflow:ellipsis}
+.pill{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;margin-left:6px;vertical-align:1px}
+.pill.web{background:var(--ia-soft);color:var(--ia)} .pill.wa{background:var(--avance-soft);color:var(--avance)} .pill.otro{background:var(--line-2);color:var(--muted)}
+.best td{background:color-mix(in srgb,var(--avance-soft) 55%,transparent)}
+
+/* galería de anuncios */
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px}
+.ads{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:14px}
+.ad{display:grid;grid-template-rows:auto 1fr;border:1px solid var(--line);border-radius:12px;overflow:hidden;text-decoration:none;color:inherit;background:var(--card);transition:transform .15s,box-shadow .15s}
+.ad:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(20,30,70,.12)}
+.ad .img{aspect-ratio:1/1;max-width:100%;background:var(--line-2);position:relative;display:grid;place-items:center;color:var(--muted);font-size:12px}
+.ad .img img{width:100%;height:100%;object-fit:cover;display:block}
+.ad .rank{position:absolute;top:8px;left:8px;background:var(--card);color:var(--ink);font-family:var(--display);font-weight:800;font-size:13px;padding:2px 8px;border-radius:999px}
+.ad .kind{position:absolute;top:8px;right:8px}
+.ad .body{padding:10px 12px;display:grid;gap:6px;align-content:start}
+.ad .t{font-size:12.5px;font-weight:600;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.ad .m{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:12px}
+.ad .m b{font-family:var(--display);font-size:14px;display:block}
+.ad .open{font-size:12px;color:var(--accent);font-weight:600}
+@media (prefers-reduced-motion:reduce){.ad{transition:none}.ad:hover{transform:none}}
+
+/* gráficos */
+.chart{width:100%;overflow-x:auto}
+.chart svg{display:block;width:100%;height:auto;min-width:420px}
+.chart text{fill:var(--muted);font-family:var(--body);font-size:11px}
+.chart .lab{fill:var(--ink);font-weight:600}
+.heat{display:grid;grid-template-columns:34px repeat(24,minmax(12px,1fr));gap:2px;font-size:10px;min-width:520px}
+.heat .c{aspect-ratio:1/1;border-radius:3px}
+.heat .h{color:var(--muted);text-align:center}
+.heat .d{color:var(--muted);align-self:center}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--ink-2);margin-top:10px}
+.legend span{display:inline-flex;gap:6px;align-items:center}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* ── tablero semanal (spec) ───────────────────────── */
+:root{--wa:#C97710;--wa-soft:#FBEFDC;--web:#2F6FDB;--web-soft:#E4EDFC;--meta-ok:#17915F}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wa:#F0A445;--wa-soft:#3A2D1A;--web:#6199F2;--web-soft:#1E2B55;--meta-ok:#3CC08A}}
+:root[data-theme="dark"]{--wa:#F0A445;--wa-soft:#3A2D1A;--web:#6199F2;--web-soft:#1E2B55;--meta-ok:#3CC08A}
+.semctl{max-width:1240px;margin:10px auto 0;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:13px}
+.semctl select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 8px;font-size:13px}
+.seg{display:inline-flex;background:var(--line-2);border-radius:9px;padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:4px 10px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(20,30,70,.12)}
+.cov{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:3px 10px 3px 8px;font-size:12px}
+.cov b{font-family:var(--display);font-size:15px}
+.cov.bad b{color:var(--salida)} .cov.ok b{color:var(--avance)}
+.nd{display:none;font-size:12.5px;color:var(--ink-2);background:var(--accent-soft);border-radius:10px;padding:10px 12px;margin:0}
+body.notas .nd{display:block}
+.alerts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.al{border-radius:12px;padding:12px 14px;display:grid;gap:4px;border:1px solid}
+.al.s3{background:var(--salida-soft);border-color:color-mix(in srgb,var(--salida) 40%,transparent)}
+.al.s2{background:var(--espera-soft);border-color:color-mix(in srgb,var(--espera) 40%,transparent)}
+.al.s1{background:var(--line-2);border-color:var(--line)}
+.al b{font-size:14px;display:flex;gap:8px;align-items:baseline}
+.al b::before{content:"●";font-size:10px}
+.al.s3 b::before{color:var(--salida)} .al.s2 b::before{color:var(--espera)} .al.s1 b::before{color:var(--muted)}
+.al span{font-size:13px;color:var(--ink-2)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,160px),1fr));background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.tile{background:var(--card);padding:12px 14px;display:grid;gap:3px;align-content:start;box-shadow:inset -1px -1px 0 var(--line)}
+.tile .l{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-family:var(--display);font-variant-numeric:tabular-nums;font-size:24px;font-weight:700;line-height:1.1}
+.tile .v small{font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap;display:inline-block}
+.tile .v.bad{color:var(--salida)} .tile .v.good{color:var(--avance)}
+.tile .d{font-size:12px;font-variant-numeric:tabular-nums} .d.up{color:var(--avance)} .d.dn{color:var(--salida)} .d.eq{color:var(--muted)}
+.tile .n{font-size:11.5px;color:var(--muted)}
+.tile svg{width:100%;height:38px;display:block;margin-top:2px}
+.origin{display:flex;height:22px;border-radius:6px;overflow:hidden;background:var(--line-2);margin-top:8px}
+.origin i{display:block;height:100%}
+.hatch{background:repeating-linear-gradient(135deg,var(--line) 0 5px,transparent 5px 10px);border:1px dashed var(--sinmedir)}
+.hatch-wa{background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--wa) 55%,transparent) 0 5px,transparent 5px 10px)}
+.ctable td.cb,.ctable th.cb{width:28px;text-align:center;padding-inline:6px}
+.ctable td.name{display:flex;gap:6px;align-items:center}
+.ctable .tri{border:0;background:none;cursor:pointer;color:var(--muted);font-size:11px;padding:0 2px}
+.ctable tr.sub td{background:var(--line-2);font-size:12.5px}
+.ctable tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.ctable tr.off td{opacity:.45}
+.red{color:var(--salida);font-weight:700} .amb{color:var(--espera);font-weight:700} .grn{color:var(--avance);font-weight:700}
+.sharebar{display:inline-block;height:6px;width:40px;background:var(--line-2);border-radius:3px;vertical-align:middle;margin-left:6px;overflow:hidden}
+.sharebar i{display:block;height:100%;border-radius:3px}
+.fz{display:grid;gap:10px}
+.fz .chips{display:flex;flex-wrap:wrap;gap:6px}
+.fz .chips span{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:12.5px;font-variant-numeric:tabular-nums}
+.ftab{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.ftab th{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);background:none;position:static}
+.ftab th:first-child,.ftab td:first-child{text-align:left}
+.ftab td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line-2)}
+.ftab td.bcell{width:38%;min-width:120px}
+.fbar{height:18px;background:var(--line-2);border-radius:5px;position:relative;overflow:hidden}
+.fbar i{position:absolute;inset:0 auto 0 0;border-radius:5px}
+.fbar i.base{background:var(--sinmedir);opacity:.45}
+.ftab tr.low td{color:var(--muted)} .ftab tr.low .fbar i.v{opacity:.45}
+.loss{display:inline-block;min-width:44px;text-align:center;border-radius:6px;padding:1px 6px;background:var(--line-2);font-weight:700}
+.loss.big{background:var(--salida-soft);color:var(--salida);outline:1px solid color-mix(in srgb,var(--salida) 50%,transparent)}
+.off-msg{border:1px dashed var(--line);border-radius:10px;padding:16px;color:var(--muted);font-size:13.5px;text-align:center}
+.warn-bar{background:var(--espera-soft);color:var(--espera);border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:600}
+.annot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px}
+.annot input[type=text]{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 8px;min-width:0;width:min(260px,100%)}
+.annot select{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 6px}
+.annot .btn{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:4px 10px;cursor:pointer;font-weight:600}
+.annot .ach{display:inline-flex;gap:6px;align-items:center;border-left:3px solid var(--wa);background:var(--line-2);border-radius:6px;padding:2px 8px}
+.annot .ach button{border:0;background:none;cursor:pointer;color:var(--muted);padding:0}
+.smalls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px}
+.sm{border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:4px}
+.sm .h{font-size:11.5px;font-weight:700;display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sm .v{font-family:var(--display);font-size:18px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.lab{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:4px}
+.lab.up{background:var(--avance-soft);color:var(--avance)} .lab.dn{background:var(--salida-soft);color:var(--salida)}
+.lab.eq{background:var(--line-2);color:var(--muted)} .lab.pk{background:var(--espera-soft);color:var(--espera)} .lab.lo{background:var(--line-2);color:var(--muted)}
+.sm svg{width:100%;height:56px;display:block}
+.meas{display:grid;gap:4px;font-size:12.5px;color:var(--ink-2);margin:10px 0 0;padding-left:18px}
+/* funnel del formulario (banda) */
+.ffk{display:grid;grid-template-columns:repeat(2,1fr);background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.ffk div{padding:10px 12px;display:grid;gap:2px;box-shadow:inset -1px -1px 0 var(--line)}
+.ffk .l{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.ffk .v{font-family:var(--display);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.ffk .s{font-size:11px;color:var(--muted)}
+@media (min-width:560px){.ffk{grid-template-columns:repeat(4,1fr)}}
+@media (min-width:1100px){.ffk{grid-template-columns:repeat(8,1fr)}}
+.ffwrap{overflow-x:auto}
+.ff{position:relative;min-width:760px;background:#0F1A2E;border-radius:12px;color:#E8EDF7;overflow:hidden}
+.ff .cols{display:grid;position:relative;z-index:1}
+.ff .col{padding:14px 14px 0;border-left:1px solid rgba(255,255,255,.08);min-height:230px;display:grid;align-content:start;gap:6px}
+.ff .col:first-child{border-left:0}
+.ff .nm{font-size:12.5px;font-weight:600;color:#AFC0DA}
+.ff .ct{font-family:var(--display);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums}
+.ff .dl{justify-self:start;font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px}
+.ff .dl.up{background:rgba(60,192,138,.18);color:#5BD6A0} .ff .dl.dn{background:rgba(240,105,127,.2);color:#FF8A9C} .ff .dl.eq{background:rgba(255,255,255,.08);color:#AFC0DA}
+.ff svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:120px;display:block}
+.ff .pill{position:absolute;z-index:2;transform:translate(-50%,-50%);background:rgba(15,26,46,.72);color:#E8EDF7;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18);font-variant-numeric:tabular-nums}
+/* tablas jerárquicas de Meta */
+.msec h3{display:flex;gap:8px;align-items:center}
+.mk .v{font-size:18px}
+.htab td.name{display:flex;gap:6px;align-items:center;max-width:none;white-space:nowrap}
+.htab .tri{border:0;background:none;cursor:pointer;color:var(--muted);font-size:11px;padding:0 2px;width:16px}
+.htab tr.l1 td{font-weight:700}
+.htab tr.l2 td{background:var(--line-2)} .htab tr.l2 td.name{padding-left:30px}
+.htab tr.l3 td{background:color-mix(in srgb,var(--line-2) 55%,var(--card));font-size:12.5px} .htab tr.l3 td.name{padding-left:52px}
+.htab .thumb{width:30px;height:30px;border-radius:5px;object-fit:cover;flex:none;background:var(--line-2)}
+.htab .nm{overflow:hidden;text-overflow:ellipsis;max-width:340px;display:inline-block;vertical-align:middle}
+.htab tr.tot td{font-weight:700;border-top:2px solid var(--line)}
+.htab .lvl{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-left:4px}
+#r-kpis{grid-template-columns:repeat(2,1fr)}
+@media (min-width:900px){#r-kpis{grid-template-columns:repeat(4,1fr)}}
+#tip{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--paper);font-size:12.5px;padding:7px 10px;border-radius:8px;max-width:260px;box-shadow:0 6px 18px rgba(0,0,0,.2);line-height:1.4}
+.note{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin:0}
+.empty{color:var(--muted);font-size:13.5px;padding:18px;text-align:center}
+footer{margin-top:28px;color:var(--muted);font-size:12.5px;display:grid;gap:4px}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand"><h1>Cuentista</h1><span id="gen"></span></div>
+    <nav class="tabs" role="tablist" aria-label="Secciones">
+      <button role="tab" id="t-resumen" data-tab="resumen" aria-selected="true">Resumen</button>
+      <button role="tab" id="t-semanal" data-tab="semanal" aria-selected="false">Semanal</button>
+      <button role="tab" id="t-kommo" data-tab="kommo" aria-selected="false">Kommo</button>
+      <button role="tab" id="t-meta" data-tab="meta" aria-selected="false">Meta Ads</button>
+      <button role="tab" id="t-ga" data-tab="ga" aria-selected="false">Analytics</button>
+    </nav>
+  </div>
+  <div class="semctl sem-only" id="semctl">
+    <label class="muted" for="s-sem" style="font-weight:700;letter-spacing:.05em;font-size:11px">SEMANA</label><select id="s-sem"></select>
+    <span class="muted" style="font-weight:700;letter-spacing:.05em;font-size:11px">COMPARAR</span>
+    <span class="seg" id="s-comp"><button data-c="ant" aria-pressed="true">Semana anterior</button><button data-c="r4" aria-pressed="false">Rolling 4</button></span>
+    <span class="cov" id="s-cov"></span>
+    <button class="chip" id="s-notas" type="button" aria-pressed="false">Notas de diseño</button>
+  </div>
+  <div class="filters det-only" id="filters">
+    <button class="chip" data-p="7">7 días</button>
+    <button class="chip" data-p="30">30 días</button>
+    <button class="chip" data-p="90">90 días</button>
+    <button class="chip" data-p="mes">Este mes</button>
+    <button class="chip" data-p="mesant">Mes pasado</button>
+    <button class="chip" data-p="todo">Todo</button>
+    <span class="sep"></span>
+    <label class="small muted" for="f-desde">Desde</label><input type="date" id="f-desde">
+    <label class="small muted" for="f-hasta">hasta</label><input type="date" id="f-hasta">
+    <span class="sep kommo-only"></span>
+    <label class="small muted kommo-only" for="f-etapa">Etapa actual</label>
+    <select id="f-etapa" class="kommo-only"></select>
+    <label class="small muted kommo-only" for="f-origen">Origen</label>
+    <select id="f-origen" class="kommo-only">
+      <option value="directo">Kommo directo</option><option value="lsa">Leadsales (importados)</option><option value="todos">Todos</option>
+    </select>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ═════════ RESUMEN ═════════ -->
+  <section class="tab" id="p-resumen" role="tabpanel" aria-labelledby="t-resumen">
+    <div class="intro">
+      <h2>Lo que mueve el negocio</h2>
+      <p class="small" id="r-sub"></p>
+    </div>
+    <div class="kpis" id="r-kpis"></div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Ventas reales por mes</h3><p>Pagos completados en el sitio (Supabase · checkout_sessions), con su monto cobrado real. La inversión es de Meta (desde enero de 2026). El mes en curso va incompleto.</p></div></div>
+      <div class="chart" id="r-mes"></div>
+      <div class="tbl" id="r-mestab" style="margin-top:12px"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Lo más importante del periodo</h3><p>Ordenado por urgencia. Cada punto dice qué pasa y qué hacer.</p></div></div>
+      <div class="findings" id="r-find"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--wa)"></i>Camino de WhatsApp</h3><p>De la inversión en Meta al pago registrado en Kommo.</p></div></div>
+        <div id="r-wa"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--web)"></i>Camino de la web</h3><p>De la inversión en Meta a la compra en el sitio (GA4).</p></div></div>
+        <div id="r-web"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3>Ventas por semana</h3><p>Pagos completados (Supabase). “Con UTM de pauta” = el cliente entró por un enlace de una campaña de Meta. La última semana está en curso.</p></div></div>
+        <div class="chart" id="r-vsem"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><h3>Costo por venta por semana</h3><p>Inversión total en Meta ÷ pagos completados (Supabase). Meta del negocio: $200.</p></div></div>
+        <div class="chart" id="r-csem"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Los anuncios que más traen</h3><p>Los 3 con más compras web y los 3 con más conversaciones de WhatsApp en el periodo. Clic para abrirlos.</p></div></div>
+      <div class="ads" id="r-ads"></div>
+    </div>
+  </section>
+
+  <!-- ═════════ SEMANAL (spec) ═════════ -->
+  <section class="tab" id="p-semanal" role="tabpanel" aria-labelledby="t-semanal" hidden>
+    <div class="alerts" id="s-alertas"></div>
+    <p class="nd">Alertas: tres renglones calculados, ordenados por severidad, nunca escritos a mano. Reglas: margen por venta negativo en campaña con gasto sobre $800/semana · frecuencia ≥2.8 subiendo 25% mientras el CTR cae 15% en tres semanas · menos de 70% de los clics al enlace llegan a la página · el gasto se movió más de 30% contra la semana anterior · cobertura de atribución bajo 60%.</p>
+
+    <div class="panel">
+      <div class="panel-h"><div><h3>Resumen</h3><p id="s-res-sub"></p></div><span class="small muted" id="s-res-sem"></span></div>
+      <div class="tiles" id="s-tiles"></div>
+      <p class="nd" style="margin-top:10px">ROAS y margen van como rango: el gasto es exacto, pero el ingreso solo cuenta la venta que se puede ligar a una campaña. El piso usa el ingreso atribuido; el techo supone que todo lo que no tiene origen viene de pauta. Línea punteada = meta; punto hueco = semana en curso, incompleta.</p>
+      <div style="margin-top:16px">
+        <div class="small" style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span><b>Ventas por origen</b> · <span id="s-origen-tot"></span></span><span class="muted">La rebanada “sin origen” se dibuja, nunca se reparte entre las demás.</span></div>
+        <div class="origin" id="s-origen"></div>
+        <div class="legend" id="s-origen-leg"></div>
+        <ul class="meas" id="s-medicion"></ul>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3>Tendencia</h3>
+          <span class="seg" id="s-vista"><button data-v="agr" aria-pressed="true">Agregado</button><button data-v="camp" aria-pressed="false">Por campaña</button></span></div>
+        <span class="seg" id="s-metrica"><button data-m="ventas" aria-pressed="true">Ventas</button><button data-m="cac">CAC</button><button data-m="margen">Margen</button><button data-m="cpl">CPL</button><button data-m="frec">Frecuencia</button><button data-m="ctr">CTR</button></span></div>
+      <div class="annot" id="s-annot">
+        <span class="muted" style="font-weight:700;letter-spacing:.05em">ANOTAR</span>
+        <input type="text" id="s-an-txt" maxlength="60" placeholder="Día del Niño, cambio de creativo…">
+        <select id="s-an-sem" aria-label="Semana de la anotación"></select>
+        <button class="btn" id="s-an-add" type="button">Marcar</button>
+        <span id="s-an-list" style="display:contents"></span>
+        <span class="muted" id="s-an-msg"></span>
+      </div>
+      <div id="s-trend-warn" style="margin-top:10px"></div>
+      <div class="chart" id="s-trend" style="margin-top:8px"></div>
+      <p class="nd" style="margin-top:10px">Con cuatro campañas seleccionadas o menos se dibuja una línea por campaña; con más, se agrega por destino. Las anotaciones son eventos que el equipo marca a mano: con seis semanas de historia es lo único que separa estacionalidad de agotamiento. Si el gasto se mueve más de 30%, el CAC y el margen de esa semana quedan sesgados porque la venta llega días después del gasto. En “Por campaña”, la etiqueta es relativa a la métrica elegida, no un veredicto sobre la campaña.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h"><div><h3>Campañas</h3><p>Prefunnel: de dónde viene el volumen y cuánto cuesta. Las casillas filtran la tendencia y los funnels.</p></div>
+        <div class="ctl"><span class="muted">Orden</span><span class="seg" id="s-orden"><button data-o="gasto" aria-pressed="true">Gasto</button><button data-o="margen">Margen</button></span>
+          <button class="chip" id="s-todas" type="button">Todas</button><button class="chip" id="s-ninguna" type="button">Ninguna</button></div></div>
+      <div class="tbl"><table class="ctable" id="s-camp"></table></div>
+      <p class="note" style="margin-top:10px"><b>CPL no es CAC.</b> CPL es el costo por lead: en WhatsApp, la conversación iniciada (lo que reporta Meta); en Web, el configurador iniciado. CAC es costo por venta pagada. Margen = ticket − producción ($120 físico / $15 digital) − Stripe ($3 + 3.6%) − CAC.</p>
+      <p class="nd" style="margin-top:8px">Orden por defecto: gasto, porque así se entra a revisar. El orden por margen existe para que la campaña chica y eficiente no quede invisible. Por qué margen y no CAC: un CAC de $118 sobre una venta digital de $99 es pérdida; uno de $175 sobre una física de $350 no. LPV% bajo 70% es fuga técnica, no de audiencia. En Web se mide con las sesiones de GA4 de esa campaña ÷ clics al enlace, porque el evento de visita del píxel de Meta no está bien instalado.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="panel fz" id="s-fwa"></div>
+      <div class="panel fz" id="s-fweb"></div>
+    </div>
+    <p class="nd">Dos funnels separados, no uno con división: son procesos distintos. La barra y la pérdida se miden contra los que entraron (puntos del tope), no contra la etapa anterior: perder 40% donde ya solo quedan 60 personas no es lo mismo que perderlo en la puerta. Las dos mayores pérdidas se marcan en rojo. Bajo 20 casos el renglón va en gris: se muestra, pero no sostiene una decisión. Al filtrar campañas, la barra gris de fondo es el promedio de todo el destino esa semana.</p>
+  </section>
+
+  <!-- ═════════ KOMMO ═════════ -->
+  <section class="tab" id="p-kommo" role="tabpanel" aria-labelledby="t-kommo" hidden>
+    <div class="intro">
+      <h2>Funnel comercial contra la propuesta nueva</h2>
+      <p class="small">Leads creados en el periodo. Cada fase se compara con la cadencia que propone el funnel nuevo (Miro).</p>
+    </div>
+    <div class="findings" id="k-find"></div>
+    <div class="kpis" id="k-kpis"></div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3>Embudo por fases del funnel nuevo</h3>
+          <p>Leads que llegaron a cada fase o más allá. Las fases rayadas aún no existen en Kommo: no se pueden medir hasta crearlas.</p></div></div>
+        <div class="funnel" id="k-funnel"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><h3>Estados transversales</h3>
+          <p>En el funnel nuevo pueden activarse desde cualquier fase. Aquí, desde dónde salen.</p></div></div>
+        <div id="k-trans" style="display:grid;gap:18px"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Cadencia propuesta vs. lo que pasa hoy</h3>
+        <p>Una tarjeta por fase, con la regla del Miro y el dato real del periodo.</p></div></div>
+      <div class="grid3" id="k-cad"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3>Leads y ventas por día</h3><p>Leads creados y ventas (entrada a Pago Realizado) por día.</p></div></div>
+        <div class="chart" id="k-trend"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><h3>Para actuar hoy</h3>
+          <p>Leads abiertos que ya pasaron el tiempo que da la cadencia en su fase. Clic para abrir en Kommo.</p></div></div>
+        <div id="k-act"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════ META ═════════ -->
+  <section class="tab" id="p-meta" role="tabpanel" aria-labelledby="t-meta" hidden>
+    <div class="intro">
+      <h2>Qué pauta está trayendo resultados</h2>
+      <p class="small">Ventas web y conversaciones de WhatsApp se miden por separado: su “resultado” no es el mismo.</p>
+    </div>
+    <div class="findings" id="m-find"></div>
+    <div class="panel msec">
+      <div class="panel-h"><div><h3><i class="dot" style="background:var(--web)"></i> Campañas de conversiones · ventas web</h3><p>Objetivo de ventas: el resultado es la compra en el sitio. Clic en ▶ para ver sus conjuntos y anuncios.</p></div></div>
+      <div class="ffk mk" id="m-kweb"></div>
+      <div class="tbl"><table class="htab" id="m-tweb"></table></div>
+    </div>
+    <div class="panel msec">
+      <div class="panel-h"><div><h3><i class="dot" style="background:var(--wa)"></i> Campañas de WhatsApp</h3><p>Objetivo de mensajes: el resultado es la conversación iniciada. La venta ocurre en el chat y se registra en Kommo.</p></div></div>
+      <div class="ffk mk" id="m-kwa"></div>
+      <div class="tbl"><table class="htab" id="m-twa"></table></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Inversión por semana</h3><p>Pasa el cursor para ver resultados y costo por resultado de cada semana.</p></div></div>
+      <div class="chart" id="m-trend"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Mejores anuncios</h3><p>Clic en un anuncio para abrirlo en Facebook o Instagram.</p></div>
+        <div class="ctl">
+          <select id="m-ad-tipo" aria-label="Tipo de campaña"><option value="web">Ventas web</option><option value="wa">WhatsApp</option><option value="todos">Todos</option></select>
+          <select id="m-ad-orden" aria-label="Ordenar por"><option value="res">Más resultados</option><option value="cpr">Menor costo por resultado</option><option value="roas">Mayor ROAS</option><option value="ctr">Mayor CTR</option></select>
+        </div></div>
+      <div class="ads" id="m-ads"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Embudo de las campañas de ventas</h3><p>Del anuncio a la compra, según el píxel de Meta.</p></div></div>
+      <div class="funnel" id="m-funnel"></div>
+    </div>
+  </section>
+
+  <!-- ═════════ GA4 ═════════ -->
+  <section class="tab" id="p-ga" role="tabpanel" aria-labelledby="t-ga" hidden>
+    <div class="intro">
+      <h2>Cómo se comporta el sitio</h2>
+      <p class="small">La conversión se mide con compras reales (evento purchase), no con “eventos clave”.</p>
+    </div>
+    <div class="findings" id="g-find"></div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Funnel del formulario</h3><p>Sesiones que llegan a cada paso del configurador, de “Inicio” a “Compra”. La pastilla de la banda es el % que pasa desde el paso anterior; la flecha compara contra el periodo anterior del mismo largo.</p></div>
+        <div class="ctl"><select id="g-fw-canal" aria-label="Canal del funnel"></select></div></div>
+      <div class="ffk" id="g-ffk"></div>
+      <div class="ffwrap"><div class="ff" id="g-ff"></div></div>
+      <p class="note" id="g-ff-nota" style="margin-top:10px"></p>
+    </div>
+    <div class="kpis" id="g-kpis"></div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Canales: de dónde vienen las sesiones</h3><p>Rebote = sesiones sin interacción. Conversión = compras / sesiones.</p></div></div>
+      <div class="tbl" id="g-canal"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3>Día de la semana</h3><p>Barras = sesiones. Etiqueta = tasa de conversión de ese día.</p></div></div>
+        <div class="chart" id="g-dow"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><div><h3>Día y hora</h3><p>Más oscuro = más compras por cada 100 sesiones en esa franja.</p></div>
+        <div class="ctl"><select id="g-heat-m" aria-label="Métrica del mapa"><option value="conv">Conversión</option><option value="ses">Sesiones</option></select></div></div>
+      <div class="chart"><div class="heat" id="g-heat"></div></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3>Sesiones por día</h3></div></div>
+        <div class="chart" id="g-trend"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><h3>Dispositivo</h3></div></div>
+        <div class="tbl" id="g-disp"></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <div class="panel-h"><div><h3>Fuente / medio</h3></div></div>
+        <div class="tbl" id="g-fuente"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-h"><div><h3>Páginas de entrada</h3></div></div>
+        <div class="tbl" id="g-pag"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer id="foot"></footer>
+</main>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+/* ── utilidades ───────────────────────────────────────────── */
+const $ = s => document.querySelector(s);
+const N = new Intl.NumberFormat("es-MX");
+const fmt = n => N.format(Math.round(n || 0));
+const money = n => "$" + new Intl.NumberFormat("es-MX", {maximumFractionDigits: n >= 100 ? 0 : 2}).format(n || 0);
+const pct = (x, d = 1) => isFinite(x) ? (x * 100).toFixed(d).replace(/\.0+$/, "") + "%" : "—";
+const div = (a, b) => b ? a / b : NaN;
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const median = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m-1] + s[m]) / 2; };
+const dias = sec => isFinite(sec) ? (sec / 86400 < 1 ? (sec / 3600).toFixed(1).replace(".0","") + " h" : (sec / 86400).toFixed(1).replace(".0","") + " días") : "—";
+const iso = d => d.toISOString().slice(0, 10);
+const addDays = (s, n) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + n); return iso(d); };
+const DOW = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const dowOf = s => (new Date(s + "T12:00:00").getDay() + 6) % 7;
+const fechaLarga = s => new Date(s + "T12:00:00").toLocaleDateString("es-MX", {day:"numeric", month:"short"});
+
+const tip = $("#tip");
+document.addEventListener("mouseover", e => { const t = e.target.closest("[data-tip]"); if (!t) { tip.hidden = true; return; } tip.innerHTML = t.dataset.tip; tip.hidden = false; });
+document.addEventListener("mousemove", e => { if (tip.hidden) return; const w = tip.offsetWidth; tip.style.left = Math.min(e.clientX + 14, innerWidth - w - 8) + "px"; tip.style.top = (e.clientY + 16) + "px"; });
+
+const S = {tab: "resumen", desde: null, hasta: null, etapa: "all", origen: "directo"};
+try { const t = localStorage.getItem("cuentista.tab3"); if (t) S.tab = t; } catch (e) {}
+const hoy = DATA.hoy;
+
+/* ── filtros ──────────────────────────────────────────────── */
+function preset(p) {
+  let d = hoy, h = hoy;
+  if (p === "mes") d = hoy.slice(0, 8) + "01";
+  else if (p === "mesant") { const x = new Date(hoy.slice(0, 8) + "01T12:00:00"); x.setDate(0); h = iso(x); d = h.slice(0, 8) + "01"; }
+  else if (p === "todo") d = DATA.inicio;
+  else d = addDays(hoy, -(+p - 1));
+  S.desde = d; S.hasta = h; S.preset = p; syncFilters(); render();
+}
+function syncFilters() {
+  $("#f-desde").value = S.desde; $("#f-hasta").value = S.hasta;
+  document.querySelectorAll("#filters .chip").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === S.preset));
+}
+document.querySelectorAll("#filters .chip").forEach(b => b.onclick = () => preset(b.dataset.p));
+$("#f-desde").onchange = e => { S.desde = e.target.value; S.preset = null; syncFilters(); render(); };
+$("#f-hasta").onchange = e => { S.hasta = e.target.value; S.preset = null; syncFilters(); render(); };
+$("#f-etapa").onchange = e => { S.etapa = e.target.value; render(); };
+$("#f-origen").onchange = e => { S.origen = e.target.value; render(); };
+["#m-ad-tipo", "#m-ad-orden", "#g-heat-m", "#g-fw-canal"].forEach(s => $(s).onchange = render);
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; try { localStorage.setItem("cuentista.tab3", S.tab); } catch (e) {} render(); });
+const enRango = d => d >= S.desde && d <= S.hasta;
+
+function finding(nivel, etiqueta, titulo, texto, accion) {
+  return `<article class="find ${nivel}"><span class="tag">${etiqueta}</span><b>${titulo}</b>${texto ? `<p>${texto}</p>` : ""}${accion ? `<p class="do">${accion}</p>` : ""}</article>`;
+}
+const kpi = (l, v, s) => `<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span>${s ? `<span class="s">${s}</span>` : ""}</div>`;
+function frow(nombre, sub, val, max, color, extra, sinMedir) {
+  const w = sinMedir ? 100 : Math.max(0.5, 100 * val / (max || 1));
+  return `<div class="frow"><span class="name">${nombre}${sub ? `<small>${sub}</small>` : ""}</span>
+    <div class="bar ${sinMedir ? "none" : ""}" ${sinMedir ? "" : `data-tip="${esc(nombre)}: ${fmt(val)}"`}>${sinMedir ? "" : `<i style="width:${w}%;background:${color}"></i>`}</div>
+    <span class="val">${sinMedir ? `<span>sin medir</span>` : `<b>${fmt(val)}</b><span>${extra || ""}</span>`}</span></div>`;
+}
+function blist(items, color, fmtv) {
+  const max = Math.max(...items.map(i => i.v), 0) || 1;
+  return items.map(i => `<div class="bl" data-tip="${esc(i.tip || i.n)}"><span class="n">${esc(i.n)}</span><span class="b"><i style="width:${Math.max(1, 100 * i.v / max)}%;background:${i.c || color}"></i></span><span class="v">${fmtv(i)}</span></div>`).join("");
+}
+
+/* Gráfico de barras vertical simple (una sola escala). */
+function barras(el, items, {color = "var(--ia)", h = 200, label, tipf, w} = {}) {
+  if (!items.length) { el.innerHTML = `<p class="empty">Sin datos en el periodo.</p>`; return; }
+  const W = w || Math.max(420, items.length * 26), pad = {l: 44, r: 8, t: 22, b: 26};
+  const max = Math.max(...items.map(i => i.v)) || 1, step = niceStep(max);
+  const top = Math.ceil(max / step) * step, iw = W - pad.l - pad.r, ih = h - pad.t - pad.b, bw = iw / items.length;
+  let g = "";
+  for (let v = 0; v <= top; v += step) { const y = pad.t + ih - ih * v / top; g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${pad.l - 6}" y="${y + 4}" text-anchor="end">${abbr(v)}</text>`; }
+  const every = Math.ceil(items.length / 14);
+  items.forEach((it, i) => {
+    const bh = ih * it.v / top, x = pad.l + i * bw + bw * .15, y = pad.t + ih - bh;
+    g += `<rect x="${x}" y="${y}" width="${bw * .7}" height="${Math.max(bh, 0)}" rx="3" fill="${it.c || color}" data-tip="${esc(tipf ? tipf(it) : it.x + ": " + fmt(it.v))}"/>`;
+    if (label) g += `<text class="lab" x="${x + bw * .35}" y="${y - 6}" text-anchor="middle">${label(it)}</text>`;
+    if (i % every === 0) g += `<text x="${x + bw * .35}" y="${h - 8}" text-anchor="middle">${esc(it.x)}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${h}" role="img">${g}</svg>`;
+}
+/* Línea con área; varias series comparten escala. */
+function linea(el, fechas, series, {h = 210} = {}) {
+  if (!fechas.length) { el.innerHTML = `<p class="empty">Sin datos en el periodo.</p>`; return; }
+  const W = 640, pad = {l: 44, r: 12, t: 12, b: 26}, iw = W - pad.l - pad.r, ih = h - pad.t - pad.b;
+  const max = Math.max(1, ...series.flatMap(s => s.v)), step = niceStep(max), top = Math.ceil(max / step) * step;
+  const X = i => pad.l + (fechas.length === 1 ? iw / 2 : iw * i / (fechas.length - 1)), Y = v => pad.t + ih - ih * v / top;
+  let g = "";
+  for (let v = 0; v <= top; v += step) g += `<line x1="${pad.l}" x2="${W - pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pad.l - 6}" y="${Y(v) + 4}" text-anchor="end">${abbr(v)}</text>`;
+  const every = Math.ceil(fechas.length / 8);
+  fechas.forEach((f, i) => { if (i % every === 0) g += `<text x="${X(i)}" y="${h - 8}" text-anchor="middle">${fechaLarga(f)}</text>`; });
+  series.forEach(s => {
+    const pts = s.v.map((v, i) => `${X(i)},${Y(v)}`).join(" ");
+    if (s.area) g += `<polygon points="${X(0)},${Y(0)} ${pts} ${X(s.v.length - 1)},${Y(0)}" fill="${s.c}" opacity=".12"/>`;
+    g += `<polyline points="${pts}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round"/>`;
+    const li = s.v.length - 1; g += `<circle cx="${X(li)}" cy="${Y(s.v[li])}" r="4" fill="${s.c}" stroke="var(--card)" stroke-width="2"/>`;
+  });
+  const bw = iw / Math.max(1, fechas.length - 1);
+  fechas.forEach((f, i) => { g += `<rect x="${X(i) - bw / 2}" y="${pad.t}" width="${bw}" height="${ih}" fill="transparent" data-tip="<b>${fechaLarga(f)}</b><br>${series.map(s => `${s.n}: ${fmt(s.v[i])}`).join("<br>")}"/>`; });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${h}" role="img">${g}</svg>` + (series.length > 1 ? `<div class="legend">${series.map(s => `<span><i class="sw" style="background:${s.c}"></i>${s.n}</span>`).join("")}</div>` : "");
+}
+function niceStep(max) { const r = max / 4, p = Math.pow(10, Math.floor(Math.log10(r || 1))), n = r / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+function abbr(v) { return v >= 1e6 ? (v / 1e6).toFixed(1).replace(".0", "") + "M" : v >= 1e3 ? (v / 1e3).toFixed(v >= 1e4 ? 0 : 1).replace(".0", "") + "k" : fmt(v); }
+function tabla(el, cols, filas, {best} = {}) {
+  if (!filas.length) { el.innerHTML = `<p class="empty">Sin datos en el periodo.</p>`; return; }
+  el.innerHTML = `<table><thead><tr>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${filas.map((f, i) => `<tr class="${best && best(i) ? "best" : ""}">${f.map((c, j) => `<td class="${j === 0 ? "name" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+}
+
+/* ════════════════ KOMMO ════════════════ */
+const K = DATA.kommo;
+const FASE = {
+  tipificacion: {n: "Tipificación IA", c: "var(--ia)"}, interesado: {n: "Interesado", c: "var(--avance)"},
+  iniciado: {n: "Lead iniciado", c: "var(--ia)"}, finalizado: {n: "Lead finalizado", c: "var(--ia)"},
+  pendiente_pago: {n: "Pendiente de pago", c: "var(--espera)"}, cierre: {n: "Cierre · Pago realizado", c: "var(--avance)"},
+  asesor: {n: "Asesor humano", c: "var(--espera)"}, perdido: {n: "Perdido", c: "var(--salida)"}, otra: {n: "Otra", c: "var(--muted)"}
+};
+const ORDEN = ["tipificacion", "finalizado", "pendiente_pago", "cierre"];
+(function initEtapas() {
+  const sel = $("#f-etapa"), et = Object.entries(K.etapas).sort((a, b) => a[1].orden - b[1].orden);
+  sel.innerHTML = `<option value="all">Todas</option>` + et.map(([id, e]) => `<option value="${id}">${esc(e.nombre)}</option>`).join("");
+})();
+const faseDe = st => K.cierre.includes(+st) ? "cierre" : (K.mapeo[st] || "otra");
+/* fase anterior a `f` según hora de entrada */
+function previa(l, f) {
+  const e = l.fs[f]?.[0]; if (e == null) return null;
+  let best = null, bt = -1;
+  for (const [k, v] of Object.entries(l.fs)) if (k !== f && k !== "perdido" && v[0] <= e && v[0] > bt) { best = k; bt = v[0]; }
+  return best;
+}
+function siguiente(l, f) {
+  const e = l.fs[f]?.[0]; if (e == null) return null;
+  let best = null, bt = Infinity;
+  for (const [k, v] of Object.entries(l.fs)) if (k !== f && v[0] > e && v[0] < bt) { best = k; bt = v[0]; }
+  return best;
+}
+const llego = (l, f) => f === "tipificacion" ? true : f === "cierre" ? !!l.pg : ORDEN.slice(ORDEN.indexOf(f)).some(x => x === "cierre" ? l.pg : l.fs[x]) || !!l.pg;
+
+function renderKommo() {
+  const now = K.ahora;
+  const base = K.leads.filter(l => !l.mig && enRango(l.d) &&
+    (S.origen === "todos" || (S.origen === "lsa" ? l.lsa : !l.lsa)) &&
+    (S.etapa === "all" || String(l.st) === S.etapa));
+  const n = base.length, ventas = base.filter(l => l.pg), monto = ventas.reduce((a, l) => a + (l.m || 0), 0);
+  const sinFormato = ventas.filter(l => !l.f).length;
+  const tPago = ventas.map(l => l.pg - l.c).filter(x => x >= 0);
+  const perd = base.filter(l => l.fs.perdido), ases = base.filter(l => l.fs.asesor);
+  const prim = base.map(l => l.pr).filter(x => x != null && x >= 0);
+
+  $("#k-kpis").innerHTML = [
+    kpi("Leads nuevos", fmt(n), `${fmt(base.filter(l => l.lsa).length)} vía Leadsales`),
+    kpi("Ventas", fmt(ventas.length), "entraron a Pago Realizado"),
+    kpi("Conversión lead → venta", pct(div(ventas.length, n))),
+    kpi("Venta estimada", money(monto), sinFormato ? `${fmt(sinFormato)} ventas sin formato cargado` : "Digital $149 · Físico $449"),
+    kpi("Tiempo a la venta", dias(median(tPago)), "mediana desde que entra"),
+    kpi("Primera respuesta", dias(median(prim)), "mediana, bot incluido"),
+  ].join("");
+
+  /* embudo */
+  const cnt = f => base.filter(l => llego(l, f)).length;
+  const fx = {tipificacion: n, finalizado: cnt("finalizado"), pendiente_pago: cnt("pendiente_pago"), cierre: ventas.length};
+  const pasos = [["tipificacion"], ["interesado", true], ["iniciado", true], ["finalizado"], ["pendiente_pago"], ["cierre"]];
+  let html = "", prev = null;
+  pasos.forEach(([f, nm]) => {
+    if (nm) { html += frow(FASE[f].n, "no existe en Kommo", 0, n, "", "", true); return; }
+    const v = fx[f], conv = prev != null ? div(v, prev) : NaN;
+    if (prev != null && prev - v > 0) html += `<div class="drop">−${fmt(prev - v)} leads no avanzan (${pct(1 - conv)})</div>`;
+    html += frow(FASE[f].n, f === "tipificacion" ? "Leads Entrantes + Procesando IA" : f === "finalizado" ? "Información Recolectada" : f === "pendiente_pago" ? "Pendiente Pago" : "Pago Realizado y posteriores", v, n, FASE[f].c, prev != null ? pct(conv) + " de la fase anterior" : "100%");
+    prev = v;
+  });
+  $("#k-funnel").innerHTML = n ? html : `<p class="empty">No hay leads con estos filtros.</p>`;
+
+  /* transversales */
+  const desde = (arr, f) => { const c = {}; arr.forEach(l => { const p = previa(l, f) || "tipificacion"; c[p] = (c[p] || 0) + 1; }); return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({n: FASE[k]?.n || k, v, c: FASE[k]?.c})); };
+  const destAses = {}; ases.forEach(l => { const s = siguiente(l, "asesor"); const k = !s ? "Sigue con el asesor" : s === "perdido" ? "Terminó en Perdido" : "Volvió al flujo"; destAses[k] = (destAses[k] || 0) + 1; });
+  const conMotivo = perd.filter(l => l.lr).length;
+  const porDia = {}; perd.forEach(l => { const d = l.pd; porDia[d] = (porDia[d] || 0) + 1; });
+  const masivos = Object.entries(porDia).filter(([, v]) => v >= 100).sort((a, b) => b[1] - a[1]);
+  const reimp = perd.filter(l => { const a = (now - l.fs.perdido[0]) / 86400; return a >= 7 && a <= 14 && l.st === 143; }).length;
+  $("#k-trans").innerHTML = `
+    <div><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--espera)"></i>Asesor humano · ${fmt(ases.length)} leads (${pct(div(ases.length, n))})</h3>
+      <p class="small muted" style="margin:4px 0 10px">Propuesta: solo interviene cuando la IA no logra interpretar al cliente.</p>
+      <div class="blist">${blist(Object.entries(destAses).map(([k, v]) => ({n: k, v, c: k === "Volvió al flujo" ? "var(--avance)" : k === "Terminó en Perdido" ? "var(--salida)" : "var(--espera)"})), "", i => fmt(i.v))}</div></div>
+    <div><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--salida)"></i>Perdido · ${fmt(perd.length)} leads (${pct(div(perd.length, n))})</h3>
+      <p class="small muted" style="margin:4px 0 10px">Desde qué fase se perdieron. Con motivo cargado: ${fmt(conMotivo)} (${pct(div(conMotivo, perd.length))}).${masivos.length ? ` ${masivos.map(([d, v]) => `${fmt(v)} se marcaron de golpe el ${fechaLarga(d)}`).join("; ")}.` : ""}</p>
+      <div class="blist">${blist(desde(perd, "perdido"), "var(--salida)", i => fmt(i.v))}</div></div>
+    <div><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--sinmedir)"></i>Descartado · sin medir</h3>
+      <p class="small muted" style="margin:4px 0 0">No existe como etapa en Kommo: hoy spam, insultos o contactos inválidos se mezclan con Perdido.</p></div>`;
+
+  /* cadencias */
+  const enFase = (f) => base.filter(l => l.fs[f]);
+  const abiertos = (f) => base.filter(l => faseDe(l.st) === f && l.fs[f] && !l.fs[f][1]);
+  const edad = (l, f) => (now - l.fs[f][0]) / 86400;
+  const tip_ = enFase("tipificacion");
+  const tipPerd = tip_.filter(l => siguiente(l, "tipificacion") === "perdido" || (siguiente(l, "tipificacion") === "asesor" && siguiente(l, "asesor") === "perdido"));
+  const tipCad = tipPerd.filter(l => l.fs.tipificacion[2] >= 3 && l.fs.tipificacion[3] >= 3).length;
+  const tipAb = abiertos("tipificacion"), tipVenc = tipAb.filter(l => edad(l, "tipificacion") > 3).length;
+  const tipTiempo = tip_.filter(l => l.fs.tipificacion[1]).map(l => l.fs.tipificacion[1] - l.fs.tipificacion[0]);
+  const aAses = tip_.filter(l => siguiente(l, "tipificacion") === "asesor").length;
+
+  const fin = enFase("finalizado"), finT = fin.filter(l => l.fs.finalizado[1]).map(l => l.fs.finalizado[1] - l.fs.finalizado[0]);
+  const finAv = fin.filter(l => l.fs.pendiente_pago || l.pg).length, finVenc = abiertos("finalizado").filter(l => edad(l, "finalizado") > 3).length;
+
+  const pp = enFase("pendiente_pago"), ppPag = pp.filter(l => l.pg);
+  const ppT = ppPag.map(l => l.pg - l.fs.pendiente_pago[0]).filter(x => x >= 0);
+  const ppToq = pp.map(l => l.fs.pendiente_pago[2] / Math.max(1, ((l.fs.pendiente_pago[1] || now) - l.fs.pendiente_pago[0]) / 86400));
+  const ppVenc = abiertos("pendiente_pago").filter(l => edad(l, "pendiente_pago") > 5).length;
+  const ppMas5 = ppPag.filter(l => (l.pg - l.fs.pendiente_pago[0]) / 86400 > 5).length;
+
+  const asesT = ases.filter(l => l.fs.asesor[1]).map(l => l.fs.asesor[1] - l.fs.asesor[0]);
+  const st = (ok, warn) => ok ? `<span class="status ok">✓ En línea con la propuesta</span>` : warn ? `<span class="status warn">▲ Revisar</span>` : `<span class="status crit">✕ Lejos de la propuesta</span>`;
+  const card = (f, color, titulo, regla, filas, estado) => `<div class="cad"><h3><i class="dot" style="background:${color}"></i>${titulo}</h3>
+    <dl class="vs"><dt>Propuesta</dt><dd style="font-weight:500">${regla}</dd>${filas.map(([a, b]) => `<dt>${a}</dt><dd>${b}</dd>`).join("")}</dl>${estado}</div>`;
+  const rAses = div(ases.length, n);
+  $("#k-cad").innerHTML = [
+    card("tipificacion", "var(--ia)", "Tipificación IA", "3 toques en 3 días distintos. Sin respuesta al día 3 → Perdido.",
+      [["Leads", fmt(tip_.length)], ["Tiempo típico en la fase", dias(median(tipTiempo))], ["Pasan a asesor humano", `${fmt(aAses)} (${pct(div(aAses, tip_.length))})`],
+       ["Perdidos con los 3 toques en 3 días", tipPerd.length ? `${fmt(tipCad)} de ${fmt(tipPerd.length)} (${pct(div(tipCad, tipPerd.length))})` : "—"],
+       ["Abiertos con más de 3 días", fmt(tipVenc)]],
+      tip_.length ? st(div(tipCad, tipPerd.length || 1) >= .8 && tipVenc === 0, div(tipCad, tipPerd.length || 1) >= .5) : `<span class="status na">Sin datos</span>`),
+    card("finalizado", "var(--ia)", "Lead finalizado", "La IA presenta propuesta y confirma. Seguimiento de 3 días.",
+      [["Leads", fmt(fin.length)], ["Tiempo típico en la fase", dias(median(finT))], ["Avanzan a pago", `${fmt(finAv)} (${pct(div(finAv, fin.length))})`], ["Abiertos con más de 3 días", fmt(finVenc)]],
+      fin.length ? st(median(finT) <= 3 * 86400 && finVenc === 0, median(finT) <= 3 * 86400) : `<span class="status na">Sin datos</span>`),
+    card("pendiente_pago", "var(--espera)", "Pendiente de pago", "5 días, hasta 2 toques por día. Si no paga: pausa y 1 toque la semana siguiente.",
+      [["Leads", fmt(pp.length)], ["Pagan", `${fmt(ppPag.length)} (${pct(div(ppPag.length, pp.length))})`], ["Tiempo típico hasta pagar", dias(median(ppT))],
+       ["Toques por día (mediana)", isFinite(median(ppToq)) ? median(ppToq).toFixed(1) : "—"], ["Pagaron después de 5 días", fmt(ppMas5)], ["Abiertos con más de 5 días", fmt(ppVenc)]],
+      pp.length ? st(ppVenc === 0 && median(ppToq) <= 2, ppVenc <= 3) : `<span class="status na">Sin datos</span>`),
+    card("asesor", "var(--espera)", "Asesor humano", "Excepción: aclara la necesidad y devuelve el caso al flujo de la IA.",
+      [["Leads que pasaron", `${fmt(ases.length)} (${pct(rAses)})`], ["Tiempo típico con el asesor", dias(median(asesT))], ["Volvieron al flujo", fmt(destAses["Volvió al flujo"] || 0)]],
+      n ? st(rAses <= .15, rAses <= .3) : `<span class="status na">Sin datos</span>`),
+    card("perdido", "var(--salida)", "Perdido y reimpacto", "Conservar el Perdido para campaña de recuperación a los 7–14 días.",
+      [["Perdidos", fmt(perd.length)], ["Con motivo cargado", pct(div(conMotivo, perd.length))], ["Listos para reimpacto hoy (7–14 días)", fmt(reimp)]],
+      perd.length ? st(div(conMotivo, perd.length) >= .8, div(conMotivo, perd.length) >= .4) : `<span class="status na">Sin datos</span>`),
+  ].join("");
+
+  /* tendencia diaria */
+  const fechas = []; for (let d = S.desde; d <= S.hasta && fechas.length < 400; d = addDays(d, 1)) fechas.push(d);
+  const porD = {}, venD = {};
+  base.forEach(l => porD[l.d] = (porD[l.d] || 0) + 1);
+  K.leads.filter(l => !l.mig && l.pg && (S.origen === "todos" || (S.origen === "lsa" ? l.lsa : !l.lsa))).forEach(l => { if (enRango(l.pgd)) venD[l.pgd] = (venD[l.pgd] || 0) + 1; });
+  const f0 = fechas.findIndex(f => porD[f] || venD[f]);
+  const fs_ = f0 > 0 ? fechas.slice(f0) : fechas;
+  linea($("#k-trend"), fs_, [{n: "Leads", v: fs_.map(f => porD[f] || 0), c: "var(--ia)", area: true}, {n: "Ventas", v: fs_.map(f => venD[f] || 0), c: "var(--avance)"}]);
+
+  /* para actuar hoy */
+  const reglas = [["tipificacion", 3], ["finalizado", 3], ["pendiente_pago", 5], ["asesor", 1]];
+  const act = [];
+  reglas.forEach(([f, lim]) => abiertos(f).forEach(l => { const e = edad(l, f); if (e > lim) act.push({l, f, e, lim}); }));
+  act.sort((a, b) => (a.f === "pendiente_pago" ? -1 : 0) - (b.f === "pendiente_pago" ? -1 : 0) || b.e - a.e);
+  const resumen = reglas.map(([f, lim]) => { const c = act.filter(a => a.f === f).length; return `<span class="status ${c ? (f === "pendiente_pago" ? "crit" : "warn") : "ok"}">${FASE[f].n}: ${fmt(c)} &gt; ${lim} ${lim === 1 ? "día" : "días"}</span>`; }).join(" ");
+  $("#k-act").innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${resumen}</div>` +
+    (act.length ? `<div class="tbl" style="max-height:320px;overflow:auto"><table><thead><tr><th>Lead</th><th>Fase</th><th>Etapa en Kommo</th><th>Días en la fase</th></tr></thead><tbody>${act.slice(0, 60).map(a => `<tr><td><a href="https://${K.sub}.kommo.com/leads/detail/${a.l.id}" target="_blank" rel="noopener">#${a.l.id}</a></td><td>${FASE[a.f].n}</td><td>${esc(K.etapas[a.l.st]?.nombre || "")}</td><td>${a.e.toFixed(1)}</td></tr>`).join("")}</tbody></table></div>${act.length > 60 ? `<p class="note" style="margin-top:8px">Se muestran 60 de ${fmt(act.length)}.</p>` : ""}` : `<p class="empty">Nada atrasado con estos filtros.</p>`);
+
+  /* hallazgos */
+  const F = [];
+  if (n) {
+    if (rAses > .3) F.push(finding("crit", "Asesor humano", `${pct(rAses, 0)} de los leads pasan por un asesor`, "El funnel nuevo lo plantea como excepción. Hoy es el paso normal, así que la IA no está resolviendo la tipificación sola.", "Revisar en qué preguntas la IA deriva al asesor y entrenarla en esos casos."));
+    const fPeor = ORDEN.slice(1).map((f, i) => ({f, de: fx[ORDEN[i]], a: fx[f]})).filter(x => x.de >= 10).sort((a, b) => div(a.a, a.de) - div(b.a, b.de))[0];
+    if (fPeor) F.push(finding("warn", "Mayor fuga", `De ${FASE[ORDEN[ORDEN.indexOf(fPeor.f) - 1]].n} a ${FASE[fPeor.f].n} solo avanza el ${pct(div(fPeor.a, fPeor.de), 0)}`, `${fmt(fPeor.de - fPeor.a)} leads se quedan en ese paso en el periodo.`, fPeor.f === "finalizado" ? "Crear Interesado y Lead iniciado en Kommo para ver dónde exactamente se cae la conversación." : "Aplicar la cadencia de la fase y medir de nuevo en 2 semanas."));
+    if (masivos.length) F.push(finding("crit", "Perdidos sin cadencia", `${fmt(masivos[0][1])} leads se marcaron perdidos de golpe el ${fechaLarga(masivos[0][0])}`, "Fue una limpieza en bloque, no la regla de 3 toques en 3 días. Esos leads no recibieron seguimiento.", "Separar esa limpieza del análisis y aplicar la regla del día 3 lead por lead."));
+    if (perd.length && div(conMotivo, perd.length) < .4) F.push(finding("warn", "Motivos de pérdida", `Solo ${pct(div(conMotivo, perd.length), 0)} de los perdidos tiene motivo`, "Sin motivo no se puede saber si es precio, desinterés o un contacto inválido (Descartado).", "Hacer obligatorio el motivo al marcar Perdido y crear la etapa Descartado."));
+    if (ppVenc) F.push(finding("crit", "Dinero en espera", `${fmt(ppVenc)} leads llevan más de 5 días en Pendiente de pago`, "La propuesta da 5 días; después toca pausa y un toque la semana siguiente.", "Abrir “Para actuar hoy” y aplicar el toque de cierre."));
+    if (reimp) F.push(finding("info", "Reimpacto", `${fmt(reimp)} perdidos están en la ventana de 7–14 días`, "Es el momento que propone el funnel para la campaña de recuperación.", "Enviar la campaña de reimpacto a este grupo."));
+    if (sinFormato && ventas.length) F.push(finding("info", "Dato faltante", `${pct(div(sinFormato, ventas.length), 0)} de las ventas no tiene Formato`, "Sin formato no se puede calcular cuánto se vendió: el precio en Kommo está en $0.", "Llenar Formato (Digital/Físico) o el valor del lead al pasar a Pago Realizado."));
+  }
+  $("#k-find").innerHTML = F.slice(0, 4).join("") || `<p class="empty">Sin hallazgos con estos filtros.</p>`;
+}
+
+/* ════════════════ META ════════════════ */
+const M = DATA.meta;
+const TIPO = o => o === "OUTCOME_SALES" ? "web" : o === "OUTCOME_LEADS" || o === "OUTCOME_ENGAGEMENT" ? "wa" : "otro";
+const TIPO_N = {web: "Ventas web", wa: "WhatsApp", otro: "Tráfico"};
+function aggMeta(keyf) {
+  const o = {};
+  for (const r of M.diario) {
+    if (!enRango(r[0])) continue;
+    const ad = M.anuncios[r[1]], k = keyf(ad, r); if (k == null) continue;
+    const a = o[k] || (o[k] = {k, inv: 0, imp: 0, cl: 0, ce: 0, lp: 0, car: 0, pag: 0, com: 0, val: 0, conv: 0});
+    a.inv += r[2]; a.imp += r[3]; a.cl += r[4]; a.ce += r[5]; a.lp += r[6]; a.car += r[7]; a.pag += r[8]; a.com += r[9]; a.val += r[10]; a.conv += r[11];
+  }
+  return Object.values(o);
+}
+const tipoCamp = id => TIPO(M.campanas[id]?.objetivo);
+/* Un mismo creativo se duplica en varios conjuntos con otro id: en la galería se
+   agrupa por nombre y se usa como portada el anuncio con más inversión. */
+const REP = (() => { const inv = {}, rep = {}; for (const r of M.diario) inv[r[1]] = (inv[r[1]] || 0) + r[2];
+  for (const [id, a] of Object.entries(M.anuncios)) { const n = a.nombre, cur = rep[n]; if (!cur || (inv[id] || 0) > (inv[cur.id] || 0)) rep[n] = a; } return rep; })();
+const res = (a, t) => t === "web" ? a.com : t === "wa" ? a.conv : a.ce;
+const resN = {web: "compras", wa: "conversaciones", otro: "clics"};
+
+/* Frecuencia del periodo: promedio de las semanas que tocan el rango, ponderado por gasto
+   (el alcance no se puede sumar entre días, así que se toma del corte semanal). */
+function frecMeta(nivel, id) {
+  const src = nivel === "c" ? DATA.semanal.mc : DATA.semanal.ma; let fg = 0, g = 0;
+  for (const [w, x] of Object.entries(src[id] || {})) if (addDays(w, 6) >= S.desde && w <= S.hasta) { fg += x.frec * x.gasto; g += x.gasto; }
+  return g ? fg / g : null;
+}
+const MX = {abiertas: new Set()};
+function seccionMeta(tipo, elK, elT) {
+  const enT = ad => tipoCamp(ad.campana) === tipo;
+  const C = aggMeta(ad => enT(ad) ? ad.campana : null).filter(a => a.inv > 0).sort((a, b) => b.inv - a.inv);
+  const A = aggMeta(ad => enT(ad) ? ad.conjunto : null).filter(a => a.inv > 0).sort((a, b) => b.inv - a.inv);
+  const D = aggMeta(ad => enT(ad) ? ad.id : null).filter(a => a.inv > 0).sort((a, b) => b.inv - a.inv);
+  const T = C.reduce((s, a) => { for (const k of ["inv", "imp", "cl", "ce", "car", "pag", "com", "val", "conv"]) s[k] += a[k]; return s; }, {inv: 0, imp: 0, cl: 0, ce: 0, car: 0, pag: 0, com: 0, val: 0, conv: 0});
+  let fg = 0, gg = 0; C.forEach(c => { const f = frecMeta("c", c.k); if (f != null) { fg += f * c.inv; gg += c.inv; } });
+  const frec = gg ? fg / gg : null, cpm = div(T.inv, T.imp) * 1000, ctr = div(T.ce, T.imp);
+  const cell = (l, v, s) => `<div><span class="l">${l}</span><span class="v">${v}</span>${s ? `<span class="s">${s}</span>` : ""}</div>`;
+  if (tipo === "web") {
+    elK.innerHTML = [cell("Inversión", money(T.inv)), cell("Compras", fmt(T.com), `${fmt(T.car)} carritos · ${fmt(T.pag)} pagos iniciados`), cell("CPA", isFinite(div(T.inv, T.com)) ? money(T.inv / T.com) : "—", "costo por compra"),
+      cell("Valor de conversión", money(T.val)), cell("ROAS", isFinite(div(T.val, T.inv)) ? (T.val / T.inv).toFixed(2) + "x" : "—"), cell("CTR", pct(ctr, 2), `${fmt(T.ce)} clics al enlace`),
+      cell("CPM", isFinite(cpm) ? money(cpm) : "—", `${fmt(T.imp)} impresiones`), cell("Frecuencia", frec == null ? "—" : frec.toFixed(2), "promedio semanal")].join("");
+  } else {
+    const vk = K.leads.filter(l => !l.mig && l.pg && enRango(l.pgd)).length;
+    elK.innerHTML = [cell("Inversión", money(T.inv)), cell("Conversaciones", fmt(T.conv), "iniciadas por WhatsApp"), cell("Costo por conversación", isFinite(div(T.inv, T.conv)) ? money(T.inv / T.conv) : "—"),
+      cell("Ventas en Kommo", fmt(vk), "entraron a Pago Realizado"), cell("Costo por venta", vk ? money(T.inv / vk) : "—", "supone que toda venta de WhatsApp viene de la pauta"),
+      cell("CTR", pct(ctr, 2), `${fmt(T.ce)} clics`), cell("CPM", isFinite(cpm) ? money(cpm) : "—", `${fmt(T.imp)} impresiones`), cell("Frecuencia", frec == null ? "—" : frec.toFixed(2), "promedio semanal")].join("");
+  }
+  const cols = tipo === "web"
+    ? ["Inversión", "Impresiones", "CPM", "CTR", "Clics", "CPC", "Carritos", "Compras", "CPA", "Valor", "ROAS", "Frec."]
+    : ["Inversión", "Impresiones", "CPM", "CTR", "Clics", "CPC", "Conversaciones", "Costo/conv.", "Frec."];
+  const vals = (a, f) => { const cpm = div(a.inv, a.imp) * 1000, base = [money(a.inv), fmt(a.imp), isFinite(cpm) ? money(cpm) : "—", pct(div(a.ce, a.imp), 2), fmt(a.ce), a.ce ? money(a.inv / a.ce) : "—"];
+    const fr = f == null ? "—" : `<span class="${f > P.metas.frecuencia ? "amb" : ""}">${f.toFixed(2)}</span>`;
+    return tipo === "web" ? [...base, fmt(a.car), fmt(a.com), a.com ? money(a.inv / a.com) : `<span class="muted">sin compras</span>`, money(a.val), a.inv ? `<span class="${a.val / a.inv >= P.metas.roas ? "grn" : a.val / a.inv < 1 ? "red" : ""}">${(a.val / a.inv).toFixed(2)}x</span>` : "—", fr]
+      : [...base, fmt(a.conv), a.conv ? money(a.inv / a.conv) : `<span class="muted">sin conv.</span>`, fr]; };
+  const tri = (k, has) => has ? `<button class="tri" type="button" data-mx="${esc(k)}" aria-label="Desplegar">${MX.abiertas.has(k) ? "▼" : "▶"}</button>` : `<span class="tri"></span>`;
+  let body = "";
+  C.forEach(c => {
+    const hijos = A.filter(a => M.conjuntos[a.k]?.campana === c.k);
+    body += `<tr class="l1"><td class="name">${tri(c.k, hijos.length)}<span class="nm">${esc(M.campanas[c.k]?.nombre || c.k)}</span><span class="lvl">campaña</span></td>${vals(c, frecMeta("c", c.k)).map(v => `<td>${v}</td>`).join("")}</tr>`;
+    if (!MX.abiertas.has(c.k)) return;
+    hijos.forEach(a => {
+      const ads = D.filter(d => M.anuncios[d.k]?.conjunto === a.k);
+      body += `<tr class="l2"><td class="name">${tri(a.k, ads.length)}<span class="nm">${esc(M.conjuntos[a.k]?.nombre || a.k)}</span><span class="lvl">conjunto</span></td>${vals(a, frecMeta("a", a.k)).map(v => `<td>${v}</td>`).join("")}</tr>`;
+      if (!MX.abiertas.has(a.k)) return;
+      ads.forEach(d => { const ad = M.anuncios[d.k];
+        body += `<tr class="l3"><td class="name">${ad.img ? `<img class="thumb" src="${ad.img}" alt="" loading="lazy">` : `<span class="thumb"></span>`}<a class="nm" href="${esc(ad.enlace)}" target="_blank" rel="noopener" title="${esc(ad.nombre)}">${esc(ad.nombre)}</a></td>${vals(d, null).map(v => `<td>${v}</td>`).join("")}</tr>`; });
+    });
+  });
+  body += `<tr class="tot"><td>Total · ${C.length} ${C.length === 1 ? "campaña" : "campañas"}</td>${vals(T, frec).map(v => `<td>${v}</td>`).join("")}</tr>`;
+  elT.innerHTML = C.length ? `<thead><tr><th>Campaña / conjunto / anuncio</th>${cols.map(c => `<th>${c}</th>`).join("")}</tr></thead><tbody>${body}</tbody>` : `<tbody><tr><td class="empty">Sin inversión en campañas de este tipo en el periodo.</td></tr></tbody>`;
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-mx]"); if (!b) return; const k = b.dataset.mx; MX.abiertas.has(k) ? MX.abiertas.delete(k) : MX.abiertas.add(k); renderMeta(); });
+function renderMeta() {
+  const camp = aggMeta(ad => ad.campana).map(a => ({...a, t: tipoCamp(a.k), nombre: M.campanas[a.k]?.nombre || a.k})).filter(a => a.inv > 0);
+  const tot = camp.reduce((s, a) => { for (const k of ["inv", "imp", "ce", "com", "val", "conv"]) s[k] += a[k]; return s; }, {inv: 0, imp: 0, ce: 0, com: 0, val: 0, conv: 0});
+  const web = camp.filter(a => a.t === "web"), wa = camp.filter(a => a.t === "wa");
+  const sum = (arr, k) => arr.reduce((s, a) => s + a[k], 0);
+  const invWeb = sum(web, "inv"), invWa = sum(wa, "inv"), comWeb = sum(web, "com"), valWeb = sum(web, "val"), convWa = sum(wa, "conv");
+
+  camp.sort((a, b) => b.inv - a.inv);
+  const bestIdx = {}; ["web", "wa"].forEach(t => { let bi = -1, bc = Infinity; camp.forEach((a, i) => { if (a.t === t && res(a, t) >= 5) { const c = a.inv / res(a, t); if (c < bc) { bc = c; bi = i; } } }); bestIdx[t] = bi; });
+  seccionMeta("web", $("#m-kweb"), $("#m-tweb"));
+  seccionMeta("wa", $("#m-kwa"), $("#m-twa"));
+
+  /* tendencia semanal */
+  const sem = {};
+  for (const r of M.diario) { if (!enRango(r[0])) continue; const d = new Date(r[0] + "T12:00:00"); d.setDate(d.getDate() - dowOf(r[0])); const k = iso(d); const t = tipoCamp(M.anuncios[r[1]].campana); const s = sem[k] || (sem[k] = {inv: 0, com: 0, conv: 0, iw: 0, ia: 0}); s.inv += r[2]; s.com += r[9]; s.conv += r[11]; if (t === "web") s.iw += r[2]; if (t === "wa") s.ia += r[2]; }
+  const semK = Object.keys(sem).sort();
+  barras($("#m-trend"), semK.map(k => ({x: fechaLarga(k), v: sem[k].inv, s: sem[k]})), {color: "var(--accent)", tipf: it => `<b>Semana del ${it.x}</b><br>Inversión ${money(it.v)}<br>${fmt(it.s.com)} compras · ${money(div(it.s.iw, it.s.com))} c/u<br>${fmt(it.s.conv)} conversaciones · ${money(div(it.s.ia, it.s.conv))} c/u`});
+
+  /* anuncios */
+  const tAd = $("#m-ad-tipo").value, ord = $("#m-ad-orden").value;
+  let ads = aggMeta(ad => (tAd === "todos" || tipoCamp(ad.campana) === tAd) ? ad.nombre : null).filter(a => a.inv > 0).map(a => { const t = tipoCamp(REP[a.k].campana); const r = res(a, t); return {...a, t, r, cpr: r ? a.inv / r : Infinity, roas: t === "web" && a.inv ? a.val / a.inv : -1, ctr: div(a.ce, a.imp)}; });
+  const minR = ord === "cpr" || ord === "roas" ? 3 : 0;
+  ads = ads.filter(a => a.r >= minR);
+  ads.sort((a, b) => ord === "res" ? b.r - a.r || a.cpr - b.cpr : ord === "cpr" ? a.cpr - b.cpr : ord === "roas" ? b.roas - a.roas : b.ctr - a.ctr);
+  $("#m-ads").innerHTML = ads.slice(0, 16).map((a, i) => { const ad = REP[a.k]; return `<a class="ad" href="${esc(ad.enlace)}" target="_blank" rel="noopener" data-tip="${esc(ad.nombre)}<br>${esc(M.conjuntos[ad.conjunto]?.nombre || "")}">
+    <div class="img">${ad.img ? `<img src="${ad.img}" alt="" loading="lazy">` : "sin miniatura"}<span class="rank">#${i + 1}</span><span class="kind pill ${a.t}">${ad.video ? "Video · " : ""}${TIPO_N[a.t]}</span></div>
+    <div class="body"><span class="t">${esc(ad.nombre)}</span>
+      <div class="m"><span>Resultados<b>${fmt(a.r)}</b></span><span>Costo/res.<b>${isFinite(a.cpr) ? money(a.cpr) : "—"}</b></span><span>Inversión<b>${money(a.inv)}</b></span><span>${a.t === "web" ? "ROAS" : "CTR"}<b>${a.t === "web" ? (a.roas >= 0 ? a.roas.toFixed(2) : "—") : pct(a.ctr, 2)}</b></span></div>
+      <span class="open">Ver anuncio ↗</span></div></a>`; }).join("") || `<p class="empty">No hay anuncios con resultados suficientes en el periodo.</p>`;
+
+  /* embudo ventas */
+  const w = web.reduce((s, a) => { for (const k of ["imp", "ce", "lp", "car", "pag", "com"]) s[k] += a[k]; return s; }, {imp: 0, ce: 0, lp: 0, car: 0, pag: 0, com: 0});
+  const lpOk = w.lp >= w.car;   // si el píxel registra menos visitas que carritos, el dato de visitas no sirve
+  const pasos = [["Impresiones", w.imp], ["Clics al enlace", w.ce], ...(lpOk ? [["Visitas a la página", w.lp]] : []), ["Agregan al carrito", w.car], ["Inician el pago", w.pag], ["Compran", w.com]];
+  $("#m-funnel").innerHTML = w.imp ? pasos.map(([nm, v], i) => frow(nm, "", v, pasos[i === 0 ? 0 : 1][1], i < 2 ? "var(--ia)" : i < 5 ? "var(--espera)" : "var(--avance)", i ? pct(div(v, pasos[i - 1][1])) + " del paso anterior" : "")).join("") + `<p class="note">Desde “Clics al enlace” la barra usa esa cifra como 100%, para que los pasos del sitio se vean.${lpOk ? "" : ` Se omite “Visitas a la página”: el píxel registra ${fmt(w.lp)} visitas y ${fmt(w.car)} carritos, así que el evento de visita no está bien instalado.`}</p>` : `<p class="empty">Sin campañas de ventas en el periodo.</p>`;
+
+  /* hallazgos */
+  const F = [];
+  const bw_ = bestIdx.web >= 0 ? camp[bestIdx.web] : null;
+  if (web.length && invWeb) { const r = valWeb / invWeb; F.push(finding(r >= 1.5 ? "good" : r >= 1 ? "warn" : "crit", "ROAS ventas", `Por cada $1 en ventas web vuelven $${r.toFixed(2)}`, `${fmt(comWeb)} compras a ${money(invWeb / comWeb)} cada una.${r < 1 ? " Meta atribuye menos venta de la que se invierte." : ""}`, r < 1 ? "Cruzar con las ventas reales de Kommo antes de recortar: parte de la venta cierra por WhatsApp." : "")); }
+  if (wa.length && convWa) { const cK = K.leads.filter(l => !l.mig && enRango(l.d) && (S.origen === "todos" || (S.origen === "lsa" ? l.lsa : !l.lsa))).length; F.push(finding("info", "WhatsApp", `Cada conversación cuesta ${money(invWa / convWa)}`, `${fmt(convWa)} conversaciones en Meta vs. ${fmt(cK)} leads creados en Kommo (${S.origen === "directo" ? "directo" : S.origen === "lsa" ? "Leadsales" : "todos"}) en el mismo periodo.`, "Revisar que cada conversación de pauta llegue a Kommo con su UTM: hoy los leads no traen campaña.")); }
+  const gast0 = ads.filter(a => a.r === 0 && a.inv > 500).sort((a, b) => b.inv - a.inv);
+  const todosAds = aggMeta(ad => ad.nombre).map(a => { const t = tipoCamp(REP[a.k].campana); return {...a, r: res(a, t), t}; });
+  const sinRes = todosAds.filter(a => a.r === 0 && a.inv >= 500);
+  if (sinRes.length) F.push(finding("warn", "Gasto sin resultado", `${sinRes.length} anuncios gastaron ${money(sinRes.reduce((s, a) => s + a.inv, 0))} sin un solo resultado`, "Solo cuenta anuncios con más de $500 invertidos en el periodo.", "Pausarlos o pasar ese presupuesto al mejor anuncio."));
+  const topAd = todosAds.filter(a => a.t === "web" && a.r >= 5).sort((a, b) => a.inv / a.r - b.inv / b.r)[0];
+  if (topAd) F.push(finding("good", "Mejor anuncio", esc(topAd.k), `${fmt(topAd.r)} compras a ${money(topAd.inv / topAd.r)} cada una, frente a ${money(div(invWeb, comWeb))} del promedio.`, "Darle más presupuesto y hacer variaciones de ese creativo."));
+  $("#m-find").innerHTML = F.slice(0, 4).join("") || `<p class="empty">Sin inversión en el periodo.</p>`;
+}
+
+/* ════════════════ GA4 ════════════════ */
+const G = DATA.ga4;
+function aggGA(rows, n) { const o = {}; for (const r of rows) { if (!enRango(r[0])) continue; const a = o[r[1]] || (o[r[1]] = {k: r[1], v: Array(n).fill(0)}); for (let i = 0; i < n; i++) a.v[i] += r[2 + i]; } return Object.values(o); }
+function renderGA() {
+  /* canal: sessions, engaged, newUsers, views, engDur, purchases, revenue, atc, checkouts */
+  const can = aggGA(G.canal, 9).sort((a, b) => b.v[0] - a.v[0]);
+  const T = can.reduce((s, a) => s.map((x, i) => x + a.v[i]), Array(9).fill(0));
+  const [ses, eng, nuevos, vistas, dur, com, ing] = T;
+  $("#g-kpis").innerHTML = [
+    kpi("Sesiones", fmt(ses)), kpi("Usuarios nuevos", fmt(nuevos)),
+    kpi("Tasa de rebote", pct(1 - div(eng, ses)), 1 - div(eng, ses) < .05 ? "⚠ no confiable: ver hallazgo" : "sesiones sin interacción"),
+    kpi("Tiempo por sesión", isFinite(div(dur, ses)) ? Math.round(dur / ses) + " s" : "—", "interacción media"),
+    kpi("Tasa de conversión", pct(div(com, ses), 2), "compras / sesiones"),
+    kpi("Compras", fmt(com), `Ingreso ${money(ing)}`),
+  ].join("");
+  const maxS = Math.max(...can.map(a => a.v[0]), 1);
+  tabla($("#g-canal"), ["Canal", "Sesiones", "% del total", "Rebote", "Tiempo/sesión", "Conversión", "Compras", "Ingreso"],
+    can.map(a => [`${esc(a.k)}`, `<span style="display:inline-flex;gap:8px;align-items:center">${fmt(a.v[0])}<i style="display:inline-block;height:8px;width:${Math.max(2, 70 * a.v[0] / maxS)}px;background:var(--ia);border-radius:3px"></i></span>`, pct(div(a.v[0], ses)), pct(1 - div(a.v[1], a.v[0])), Math.round(div(a.v[4], a.v[0]) || 0) + " s", pct(div(a.v[5], a.v[0]), 2), fmt(a.v[5]), money(a.v[6])]));
+
+  /* funnel del formulario (configurador), por canal */
+  const selC = $("#g-fw-canal");
+  if (!selC.options.length) { const tot = {}; G.ff.forEach(r => { if (r[3] === 8 && !r[2]) tot[r[1]] = (tot[r[1]] || 0) + r[4]; });
+    selC.innerHTML = `<option value="todos">Todos los canales</option>` + Object.keys(tot).sort((a, b) => tot[b] - tot[a]).map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("") + `<option value="__wa">Link del asesor (WhatsApp)</option>`; }
+  const ch = selC.value || "todos";
+  const ffSum = (d0, d1) => { const n = Array(10).fill(0); for (const r of G.ff) { if (r[0] < d0 || r[0] > d1) continue; if (ch === "__wa" ? !r[2] : ch !== "todos" && (r[2] || r[1] !== ch)) continue; n[r[3]] += r[4]; } return n; };
+  const largo = Math.round((new Date(S.hasta + "T12:00:00") - new Date(S.desde + "T12:00:00")) / 864e5) + 1, pH = addDays(S.desde, -1), pD = addDays(pH, -(largo - 1));
+  const fn = ffSum(S.desde, S.hasta), fp = ffSum(pD, pH);
+  /* KPIs del periodo: Meta (toda la cuenta) + sitio (según el canal elegido) */
+  const metaR = (d0, d1) => { const o = {inv: 0, imp: 0, ce: 0, iw: 0, com: 0, val: 0}; for (const r of M.diario) { if (r[0] < d0 || r[0] > d1) continue; o.inv += r[2]; o.imp += r[3]; o.ce += r[5]; if (tipoCamp(M.anuncios[r[1]].campana) === "web") { o.iw += r[2]; o.com += r[9]; o.val += r[10]; } } return o; };
+  const frecR = (d0, d1) => { let fg = 0, g = 0; for (const c in DATA.semanal.mc) for (const [w, x] of Object.entries(DATA.semanal.mc[c])) if (addDays(w, 6) >= d0 && w <= d1) { fg += x.frec * x.gasto; g += x.gasto; } return g ? fg / g : null; };
+  const mA = metaR(S.desde, S.hasta), mP = metaR(pD, pH);
+  const k = (m, n) => ({frec: frecR(...(n ? [pD, pH] : [S.desde, S.hasta])), cpa: div(m.iw, m.com), imp: m.imp, cpm: div(m.inv, m.imp) * 1000, ctr: div(m.ce, m.imp), roas: div(m.val, m.iw), ses: n ? fp[8] : fn[8], car: n ? fp[9] : fn[9]});
+  const KA = k(mA, false), KP = k(mP, true);
+  const dk = (a, b, arriba) => { if (!isFinite(a) || !isFinite(b) || !b) return `<span class="s">sin comparación</span>`; const c = (a - b) / Math.abs(b), ok = arriba == null ? null : (c > 0) === arriba; return `<span class="s" style="color:${Math.abs(c) < .005 || ok == null ? "var(--muted)" : ok ? "var(--avance)" : "var(--salida)"}">${c > 0 ? "▲" : "▼"} ${Math.abs(Math.round(c * 100))}% vs periodo ant.</span>`; };
+  $("#g-ffk").innerHTML = [
+    ["Frecuencia", isFinite(KA.frec) && KA.frec != null ? KA.frec.toFixed(2) : "—", dk(KA.frec, KP.frec, false)],
+    ["CPA", isFinite(KA.cpa) ? money(KA.cpa) : "—", dk(KA.cpa, KP.cpa, false)],
+    ["Impresiones", fmt(KA.imp), dk(KA.imp, KP.imp, null)],
+    ["CPM", isFinite(KA.cpm) ? money(KA.cpm) : "—", dk(KA.cpm, KP.cpm, false)],
+    ["CTR", pct(KA.ctr, 2), dk(KA.ctr, KP.ctr, true)],
+    ["ROAS", isFinite(KA.roas) ? KA.roas.toFixed(2) + "x" : "—", dk(KA.roas, KP.roas, true)],
+    ["Sesiones iniciadas", fmt(KA.ses), dk(KA.ses, KP.ses, true)],
+    ["Carritos agregados", fmt(KA.car), dk(KA.car, KP.car, true)],
+  ].map(([l, v, d]) => `<div><span class="l">${l}</span><span class="v">${v}</span>${d}</div>`).join("");
+  /* banda */
+  const pasosF = G.pasos_form, vals = pasosF.map((_, i) => fn[i]), mxF = Math.max(...vals, 1), N = pasosF.length;
+  const cols = pasosF.map((p, i) => { const pv = fp[i], ch_ = pv ? (vals[i] - pv) / pv : null, cl = ch_ == null || Math.abs(ch_) < .005 ? "eq" : ch_ > 0 ? "up" : "dn";
+    return `<div class="col"><span class="nm">${p}</span><span class="ct">${fmt(vals[i])}</span><span class="dl ${cl}">${ch_ == null ? "—" : (ch_ > 0 ? "▲ " : "▼ ") + Math.abs(Math.round(ch_ * 100)) + "%"}</span></div>`; }).join("");
+  const H = 120, cx = i => (i + .5) / N * 1000, th = v => Math.max(3, 104 * v / mxF), mid = 60;
+  let top = `M0,${mid - th(vals[0]) / 2}`, bot = "";
+  for (let i = 0; i < N; i++) { const x0 = i / N * 1000, x1 = (i + 1) / N * 1000, h = th(vals[i]), hn = th(vals[Math.min(N - 1, i + 1)]);
+    top += ` L${x0 + (x1 - x0) * .7},${mid - h / 2}` + (i < N - 1 ? ` C${x1},${mid - h / 2} ${x1},${mid - hn / 2} ${x1 + (x1 - x0) * .3},${mid - hn / 2}` : ` L1000,${mid - h / 2}`); }
+  for (let i = N - 1; i >= 0; i--) { const x0 = i / N * 1000, x1 = (i + 1) / N * 1000, h = th(vals[i]), hp = th(vals[Math.max(0, i - 1)]);
+    bot += ` L${x1 - (x1 - x0) * .7},${mid + h / 2}` + (i > 0 ? ` C${x0},${mid + h / 2} ${x0},${mid + hp / 2} ${x0 - (x1 - x0) * .3},${mid + hp / 2}` : ` L0,${mid + h / 2}`); }
+  const svg = `<svg viewBox="0 0 1000 ${H}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ffg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#43D3F0"/><stop offset="1" stop-color="#1E7FD0"/></linearGradient></defs><path d="${top} L1000,${mid + th(vals[N - 1]) / 2}${bot.replace(/^ L[^ ]+/, m => m)} Z" fill="url(#ffg)"/></svg>`;
+  const pills = pasosF.map((_, i) => `<span class="pill" style="left:${(i + .5) / N * 100}%;bottom:${mid}px">${i === 0 ? "100%" : pct(div(vals[i], vals[i - 1]), 2)}</span>`).join("");
+  $("#g-ff").innerHTML = fn[0] ? `<div class="cols" style="grid-template-columns:repeat(${N},1fr)">${cols}</div>${svg}${pills}` : `<p class="empty" style="color:#AFC0DA">Sin sesiones del configurador en el periodo.</p>`;
+  const pag = div(fn[7], fn[6]);
+  $("#g-ff-nota").innerHTML = `Sesiones de GA4${ch === "todos" ? " de todos los canales, incluido el link del asesor" : ch === "__wa" ? " que entraron por el link del asesor (cuentista / sasu)" : ` del canal ${esc(ch)}`}. Inicio = <code>story_config_started</code>; Paquete a Resumen = <code>story_config_step</code> en cada página; Checkout = <code>begin_checkout</code>; Compra = <code>purchase</code>. Frecuencia, CPA, impresiones, CPM, CTR y ROAS son de Meta para toda la cuenta (CPA y ROAS solo campañas de ventas; frecuencia = promedio semanal ponderado por gasto). “Periodo ant.” = los ${largo} días anteriores.${isFinite(pag) ? ` Del checkout a la compra pasa el ${pct(pag, 0)}.` : ""}`;
+  const ev = {}; for (const r of G.embudo) if (enRango(r[0])) ev[r[1]] = (ev[r[1]] || 0) + r[2];
+  /* día de la semana */
+  const dw = Array.from({length: 7}, () => ({s: 0, c: 0}));
+  for (const r of G.canal) if (enRango(r[0])) { const d = dowOf(r[0]); dw[d].s += r[2]; dw[d].c += r[7]; }
+  const conv = dw.map(x => div(x.c, x.s)), bestD = conv.indexOf(Math.max(...conv.filter(isFinite)));
+  barras($("#g-dow"), dw.map((x, i) => ({x: DOW[i], v: x.s, c: i === bestD ? "var(--avance)" : i >= 5 ? "var(--sinmedir)" : "var(--ia)", conv: conv[i], com: x.c})),
+    {h: 220, label: it => pct(it.conv, 2), tipf: it => `<b>${it.x}</b><br>${fmt(it.v)} sesiones<br>${fmt(it.com)} compras · ${pct(it.conv, 2)}`});
+  $("#g-dow").insertAdjacentHTML("beforeend", `<div class="legend"><span><i class="sw" style="background:var(--ia)"></i>Lunes a viernes</span><span><i class="sw" style="background:var(--sinmedir)"></i>Fin de semana</span><span><i class="sw" style="background:var(--avance)"></i>Día con mejor conversión</span></div>`);
+
+  /* mapa día × hora */
+  const hm = Array.from({length: 7}, () => Array.from({length: 24}, () => ({s: 0, c: 0})));
+  for (const r of G.hora) if (enRango(r[0])) { const c = hm[dowOf(r[0])][+r[1]]; c.s += r[2]; c.c += r[3]; }
+  const modo = $("#g-heat-m").value, val = c => modo === "conv" ? (c.s >= 20 ? c.c / c.s : 0) : c.s;
+  const maxH = Math.max(...hm.flat().map(val)) || 1;
+  $("#g-heat").innerHTML = `<span></span>` + Array.from({length: 24}, (_, h) => `<span class="h">${h % 3 === 0 ? h : ""}</span>`).join("") +
+    hm.map((row, d) => `<span class="d">${DOW[d]}</span>` + row.map((c, h) => { const v = val(c), a = v / maxH; return `<span class="c" style="background:color-mix(in srgb, var(--ia) ${Math.round(8 + 92 * a)}%, var(--line-2))" data-tip="<b>${DOW[d]} ${h}:00</b><br>${fmt(c.s)} sesiones · ${fmt(c.c)} compras<br>Conversión ${pct(div(c.c, c.s), 2)}"></span>`; }).join("")).join("");
+
+  /* tendencia */
+  const porDia = {}; for (const r of G.canal) if (enRango(r[0])) { const a = porDia[r[0]] || (porDia[r[0]] = [0, 0]); a[0] += r[2]; a[1] += r[7]; }
+  const fechas = Object.keys(porDia).sort();
+  linea($("#g-trend"), fechas, [{n: "Sesiones", v: fechas.map(f => porDia[f][0]), c: "var(--ia)", area: true}]);
+
+  /* dispositivo, fuente, página: sessions, engaged, dur, purchases, revenue */
+  const corta = (el, rows, nom) => { const a = aggGA(rows, 5).sort((x, y) => y.v[0] - x.v[0]).slice(0, 12); tabla(el, [nom, "Sesiones", "Rebote", "Conversión", "Compras", "Ingreso"], a.map(x => [esc(x.k), fmt(x.v[0]), pct(1 - div(x.v[1], x.v[0])), pct(div(x.v[3], x.v[0]), 2), fmt(x.v[3]), money(x.v[4])])); return a; };
+  const disp = corta($("#g-disp"), G.dispositivo, "Dispositivo");
+  corta($("#g-fuente"), G.fuente, "Fuente / medio");
+  corta($("#g-pag"), G.pagina, "Página");
+
+  /* hallazgos */
+  const F = [];
+  if (ses > 100 && 1 - div(eng, ses) < .05) F.push(finding("crit", "Medición", `El rebote sale en ${pct(1 - div(eng, ses))}: no es real`, "GA4 cuenta como “con interacción” toda sesión con un evento clave, y en esta propiedad page_view y session_start están marcados como clave. Así, casi ninguna sesión rebota.", "Dejar como eventos clave solo purchase (y quizá add_to_cart) en GA4 → Administrar → Eventos clave."));
+  const rel = can.filter(a => a.v[0] >= 200).map(a => ({k: a.k, c: div(a.v[5], a.v[0]), s: a.v[0], r: 1 - div(a.v[1], a.v[0])}));
+  const bc = [...rel].sort((a, b) => b.c - a.c)[0], big = rel[0];
+  if (bc && big && bc.k !== big.k) F.push(finding("good", "Canal que mejor convierte", `${esc(bc.k)} convierte ${pct(bc.c, 2)}`, `${esc(big.k)} trae más sesiones (${pct(div(big.s, ses), 0)}) pero convierte ${pct(big.c, 2)}.`, `Mover presupuesto o esfuerzo hacia lo que se parezca a ${esc(bc.k)}.`));
+  else if (big) F.push(finding("info", "Canal principal", `${esc(big.k)} trae el ${pct(div(big.s, ses), 0)} de las sesiones`, `Convierte ${pct(big.c, 2)} con un rebote de ${pct(big.r, 0)}.`, ""));
+  const cfg = ev.story_config_started || 0, car = ev.add_to_cart || 0;
+  if (cfg >= 20) F.push(finding(div(car, cfg) < .4 ? "crit" : "warn", "Fuga en el configurador", `${pct(1 - div(car, cfg), 0)} de quienes empiezan su cuento no llegan al carrito`, `${fmt(cfg)} empezaron a configurarlo, ${fmt(car)} lo agregaron.`, "Revisar los pasos del configurador (story_config_step) donde más se abandona."));
+  if (isFinite(conv[bestD])) F.push(finding("info", "Mejor día", `${["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"][bestD]} es el día que mejor convierte`, `${pct(conv[bestD], 2)} vs. ${pct(div(com, ses), 2)} de promedio.`, "Concentrar lanzamientos y mensajes de venta ese día."));
+  if ((ev.purchase || 0) > (ev.begin_checkout || 0) * 1.1 && ev.purchase > 10) F.push(finding("warn", "Medición", "Se registran más compras que pagos iniciados", `${fmt(ev.purchase)} eventos purchase vs. ${fmt(ev.begin_checkout || 0)} begin_checkout: el evento de compra probablemente se dispara dos veces o desde otra página.`, "Revisar el etiquetado de purchase antes de tomar la conversión como exacta."));
+  const mob = disp.find(x => x.k === "mobile"), desk = disp.find(x => x.k === "desktop");
+  if (F.length < 4 && mob && desk && mob.v[0] > 100 && desk.v[0] > 100) F.push(finding("info", "Dispositivo", `Móvil: ${pct(div(mob.v[0], ses), 0)} de las sesiones`, `Convierte ${pct(div(mob.v[3], mob.v[0]), 2)} en móvil vs. ${pct(div(desk.v[3], desk.v[0]), 2)} en computadora.`, ""));
+  $("#g-find").innerHTML = F.slice(0, 4).join("") || `<p class="empty">Sin datos en el periodo.</p>`;
+}
+
+/* ════════════════ SEMANAL (spec del tablero) ════════════════ */
+const W = DATA.semanal, P = W.params;
+const CAMPS = Object.keys(W.campanas);
+const cerradas = W.semanas.filter(s => s < W.en_curso);
+const SW = {sem: cerradas[cerradas.length - 1], comp: "ant", vista: "agr", metrica: "ventas", orden: "gasto",
+  sel: new Set(CAMPS), abiertas: new Set(), notas: []};
+const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const isoSem = s => { const t = new Date(s + "T12:00:00"); t.setDate(t.getDate() + 3); const y = new Date(t.getFullYear(), 0, 4); return 1 + Math.round(((t - y) / 864e5 - 3 + ((y.getDay() + 6) % 7)) / 7); };
+const semCorta = s => "S" + isoSem(s);
+const semLabel = s => { const a = new Date(s + "T12:00:00"), b = new Date(addDays(s, 6) + "T12:00:00");
+  return `S${isoSem(s)} · ${a.getDate()}${a.getMonth() !== b.getMonth() ? " " + MES[a.getMonth()] : ""}–${b.getDate()} ${MES[b.getMonth()]}`; };
+const prevSem = (s, n = 1) => addDays(s, -7 * n);
+const Z0 = {gasto: 0, imp: 0, alcance: 0, frec: 0, clics_enlace: 0, lpv: 0, conversaciones: 0, compras: 0, valor: 0};
+const ZW = {landing: 0, config: 0, brief: 0, lead: 0, checkout: 0, pago: 0, fis: 0, dig: 0};
+const mcW = (c, s) => W.mc[c]?.[s] || Z0;
+const webW = (c, s) => W.web[c]?.[s] || ZW;
+const destC = c => W.campanas[c].destino;
+const nomC = c => W.campanas[c].nombre;
+const waV = s => W.wa_ventas[s] || {n: 0, fis: 0, dig: 0};
+const DCOL = {wa: "var(--wa)", web: "var(--web)"};
+const DNOM = {wa: "WhatsApp", web: "Web"};
+const FIS0 = (() => { let f = 0, d = 0; for (const c in W.web) for (const s in W.web[c]) { f += W.web[c][s].fis; d += W.web[c][s].dig; } for (const s in W.web_otros) { f += W.web_otros[s].fis; d += W.web_otros[s].dig; } return f + d ? f / (f + d) : .5; })();
+const shareFis = (f, d) => f + d ? f / (f + d) : null;
+function unidad(f) {
+  const t = f * P.precio.fisico + (1 - f) * P.precio.digital;
+  return {ticket: t, mu: t - (f * P.produccion.fisico + (1 - f) * P.produccion.digital) - P.stripe.fijo - P.stripe.porcentaje * t};
+}
+const waActivas = s => CAMPS.filter(c => destC(c) === "wa" && mcW(c, s).gasto > 0);
+
+/* Métricas de una campaña en una semana. Venta de WhatsApp solo se liga a la
+   campaña si es la única de WhatsApp con gasto esa semana (no se reparte). */
+function campW(c, s) {
+  const m = mcW(c, s), d = destC(c), w = webW(c, s);
+  let leads, ventas = null, fis = null, lpv = null, supone = false;
+  if (d === "web") { leads = w.config; ventas = w.pago; fis = shareFis(w.fis, w.dig); lpv = m.clics_enlace ? w.landing / m.clics_enlace : null; }
+  else { leads = m.conversaciones; const act = waActivas(s); if (act.length === 1 && act[0] === c) { const v = waV(s); ventas = v.n; fis = shareFis(v.fis, v.dig); supone = true; } }
+  const u = unidad(fis ?? FIS0), cac = ventas ? m.gasto / ventas : null;
+  return {c, d, gasto: m.gasto, imp: m.imp, frec: m.frec, clics: m.clics_enlace, lpvMeta: m.lpv, landing: w.landing, leads, ventas, fis, lpv,
+    cpl: leads ? m.gasto / leads : null, cac, mu: u.mu, ticket: u.ticket, margen: cac != null ? u.mu - cac : null,
+    ctr: m.imp ? m.clics_enlace / m.imp : null, supone};
+}
+function aggW(cs, s) {
+  const r = cs.map(c => campW(c, s)), sum = k => r.reduce((a, x) => a + (x[k] || 0), 0);
+  const g = sum("gasto"), ventas = sum("ventas"), leads = sum("leads"), imp = sum("imp"), clics = sum("clics");
+  const ingreso = r.reduce((a, x) => a + (x.ventas ? x.ventas * x.ticket : 0), 0);
+  const margen = r.reduce((a, x) => a + (x.ventas ? x.ventas * x.mu : 0), 0) - g;
+  const g_ = d => r.filter(x => x.d === d).reduce((a, x) => a + x.gasto, 0), v_ = d => r.filter(x => x.d === d).reduce((a, x) => a + (x.ventas || 0), 0);
+  return {r, gasto: g, ventas, leads, imp, clics, ingreso, margen, cac: ventas ? g / ventas : null, cpl: leads ? g / leads : null,
+    ctr: imp ? clics / imp : null, frec: g ? r.reduce((a, x) => a + x.frec * x.gasto, 0) / g : null,
+    gwa: g_("wa"), gweb: g_("web"), vwa: v_("wa"), vweb: v_("web")};
+}
+function baseW(s) {
+  const wa = waV(s), o = W.web_otros[s] || {pago: 0, fis: 0, dig: 0};
+  let wn = 0, wf = 0, wd = 0; for (const c in W.web) { const w = webW(c, s); wn += w.pago; wf += w.fis; wd += w.dig; }
+  const n = wa.n + wn + o.pago, f = shareFis(wa.fis + wf + o.fis, wa.dig + wd + o.dig) ?? FIS0;
+  return {n, ...unidad(f)};
+}
+function tilesW(s) {
+  const A = aggW(CAMPS, s), B = baseW(s);
+  return {A, B, ventas: A.ventas, gasto: A.gasto, cac: A.cac, cpl: A.cpl, frec: A.frec,
+    margen: A.margen, margenT: B.n * B.mu - A.gasto, roas: A.gasto ? A.ingreso / A.gasto : null, roasT: A.gasto ? B.n * B.ticket / A.gasto : null,
+    cob: B.n ? A.ventas / B.n : null};
+}
+function ventanaT() { const i = W.semanas.indexOf(SW.sem), ini = Math.max(0, i - (P.semanas_tendencia - 1)); const w = W.semanas.slice(ini, i + 1); if (SW.sem === cerradas[cerradas.length - 1] && W.semanas.includes(W.en_curso)) w.push(W.en_curso); return w; }
+const fmtM = {ventas: v => fmt(v), cac: v => v == null ? "—" : money(v), margen: v => v == null ? "—" : (v < 0 ? "−" : "") + money(Math.abs(v)), cpl: v => v == null ? "—" : money(v), frec: v => v == null ? "—" : v.toFixed(1), ctr: v => v == null ? "—" : pct(v, 2)};
+const mejorArriba = {ventas: true, margen: true, ctr: true, cac: false, cpl: false, frec: false, gasto: null, roas: true};
+const metaM = {cac: P.metas.cac, margen: P.metas.margen, frec: P.metas.frecuencia};
+const valM = (a, m) => ({ventas: a.ventas, cac: a.cac, margen: a.margen, cpl: a.cpl, frec: a.frec, ctr: a.ctr})[m];
+const sgn = v => (v < 0 ? "−" : "") + money(Math.abs(v));
+
+function spark(vals, {goal, cur, color = "var(--accent)"} = {}) {
+  const pts = vals.map((v, i) => [i, v]).filter(p => p[1] != null && isFinite(p[1]));
+  if (pts.length < 2) return `<svg viewBox="0 0 140 38"></svg>`;
+  const ys = pts.map(p => p[1]).concat(goal != null ? [goal] : []), mn = Math.min(...ys), mx = Math.max(...ys), rg = mx - mn || 1;
+  const X = i => 4 + 132 * i / Math.max(1, vals.length - 1), Y = v => 33 - 28 * (v - mn) / rg;
+  const line = pts.map(p => `${X(p[0])},${Y(p[1])}`).join(" ");
+  let g = `<polygon points="${X(pts[0][0])},34 ${line} ${X(pts[pts.length - 1][0])},34" fill="${color}" opacity=".12"/><polyline points="${line}" fill="none" stroke="${color}" stroke-width="1.6"/>`;
+  if (goal != null) g += `<line x1="2" x2="138" y1="${Y(goal)}" y2="${Y(goal)}" stroke="var(--avance)" stroke-dasharray="3 3" stroke-width="1"/>`;
+  const l = pts[pts.length - 1]; g += `<circle cx="${X(l[0])}" cy="${Y(l[1])}" r="3" fill="${cur ? "var(--card)" : color}" stroke="${color}" stroke-width="1.5"/>`;
+  return `<svg viewBox="0 0 140 38" aria-hidden="true">${g}</svg>`;
+}
+function delta(v, ref, m) {
+  if (v == null || ref == null || !isFinite(v) || !isFinite(ref) || ref === 0) return `<span class="d eq">sin comparación</span>`;
+  const ch = (v - ref) / Math.abs(ref), up = mejorArriba[m];
+  const cls = Math.abs(ch) < .005 || up == null ? "eq" : (ch > 0) === up ? "up" : "dn";
+  return `<span class="d ${cls}">${ch > 0 ? "+" : ""}${Math.round(ch * 100)}% vs ${SW.comp === "ant" ? "sem. ant." : "rolling 4"}</span>`;
+}
+function refW(fn) { const s = SW.sem; if (SW.comp === "ant") return fn(prevSem(s)); const v = [1, 2, 3, 4].map(k => fn(prevSem(s, k))).filter(x => x != null && isFinite(x)); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; }
+
+function renderSemanal() {
+  const s = SW.sem, T = ventanaT(), curIdx = T.indexOf(W.en_curso), TT = T.map(tilesW), t = tilesW(s);
+  /* controles */
+  $("#s-sem").innerHTML = cerradas.slice().reverse().map(x => `<option value="${x}" ${x === s ? "selected" : ""}>${semLabel(x)}</option>`).join("");
+  document.querySelectorAll("#s-comp button").forEach(b => b.setAttribute("aria-pressed", b.dataset.c === SW.comp));
+  const cov = $("#s-cov"); cov.className = "cov " + (t.cob != null && t.cob < P.alertas.cobertura_min ? "bad" : "ok");
+  cov.innerHTML = `<b>${pct(t.cob, 0)}</b><span>cobertura<br>de atribución</span>`;
+  cov.dataset.tip = `${fmt(t.ventas)} de ${fmt(t.B.n)} ventas de la semana se pueden ligar a una campaña.`;
+
+  /* alertas */
+  const al = [], A = t.A;
+  A.r.forEach(x => {
+    const n = esc(nomC(x.c)), x2 = campW(x.c, prevSem(s, 2));
+    if (x.gasto > P.alertas.gasto_min_margen && x.ventas != null) {
+      if (x.ventas === 0) al.push({s: 3, t: `${n} gastó ${money(x.gasto)} sin ventas atribuidas`, d: `Ninguna venta de la semana se liga a esta campaña: su margen por venta es negativo sin importar el ticket.`});
+      else if (x.margen < 0) al.push({s: 3, t: `${n} pierde ${money(-x.margen)} por venta`, d: `Gasta ${money(x.gasto)} esta semana. El ticket de esta campaña no alcanza a cubrir su CAC de ${money(x.cac)}.`});
+    }
+    if (x.frec >= P.alertas.frecuencia_fatiga && x2.frec && x.frec >= x2.frec * (1 + P.alertas.frecuencia_sube) && x2.ctr && x.ctr <= x2.ctr * (1 - P.alertas.ctr_cae))
+      al.push({s: 2, t: `${n}: fatiga creativa`, d: `Frecuencia de ${x2.frec.toFixed(1)} a ${x.frec.toFixed(1)} y CTR de ${pct(x2.ctr, 2)} a ${pct(x.ctr, 2)} en tres semanas. El CAC sube después.`});
+    if (x.d === "web" && x.clics >= 100 && x.lpv != null && x.lpv < P.alertas.lpv_min)
+      al.push({s: 2, t: `${n}: solo ${pct(x.lpv, 0)} de los clics llegan a la página`, d: `${fmt(x.clics)} clics al enlace y ${fmt(x.landing)} sesiones en GA4. Es fuga técnica (carga, redirección o UTM), no de audiencia.`});
+  });
+  const gPrev = aggW(CAMPS, prevSem(s)).gasto;
+  if (gPrev && Math.abs(A.gasto - gPrev) / gPrev > P.alertas.gasto_cambio) al.push({s: 1, t: `El gasto se movió ${A.gasto > gPrev ? "+" : ""}${Math.round((A.gasto - gPrev) / gPrev * 100)}% contra la semana anterior`, d: `El CAC y el margen de esta semana quedan sesgados: la venta llega días después del gasto.`});
+  if (t.cob != null && t.cob < P.alertas.cobertura_min) al.push({s: 1, t: `Cobertura de atribución: ${pct(t.cob, 0)}`, d: `Solo ${fmt(t.ventas)} de ${fmt(t.B.n)} ventas se ligan a una campaña. ROAS y margen se leen como rango.`});
+  al.sort((a, b) => b.s - a.s);
+  $("#s-alertas").innerHTML = al.slice(0, 3).map(a => `<div class="al s${a.s}"><b>${a.t}</b><span>${a.d}</span></div>`).join("") || `<div class="al s1"><b>Sin alertas esta semana</b><span>Ninguna regla se activó para ${semLabel(s)}.</span></div>`;
+
+  /* resumen */
+  $("#s-res-sem").textContent = `${semLabel(s)} · cerrada`;
+  $("#s-res-sub").textContent = `Toda la cuenta. Chispa = ${T.length} semanas${curIdx >= 0 ? "; el punto hueco es la semana en curso" : ""}.`;
+  const col = TT.map(x => x), cur = curIdx >= 0;
+  const tile = (l, v, cls, d, n, vals, goal) => `<div class="tile"><span class="l">${l}</span><span class="v ${cls || ""}">${v}</span>${d || ""}${n ? `<span class="n">${n}</span>` : ""}${spark(vals, {goal, cur})}</div>`;
+  const good = (v, m) => v == null ? "" : m === "cac" ? (v <= P.metas.cac ? "good" : "bad") : m === "margen" ? (v >= 0 ? "good" : "bad") : m === "roas" ? (v >= P.metas.roas ? "good" : "bad") : m === "frec" ? (v <= P.metas.frecuencia ? "good" : "bad") : "";
+  $("#s-tiles").innerHTML = [
+    tile("Ventas atribuidas", `${fmt(t.ventas)} <small>de ${fmt(t.B.n)} en base</small>`, "", delta(t.ventas, refW(w => tilesW(w).ventas), "ventas"), `WhatsApp ${fmt(A.vwa)} · Web ${fmt(A.vweb)}`, col.map(x => x.ventas)),
+    tile("Inversión", money(t.gasto), "", delta(t.gasto, refW(w => tilesW(w).gasto), "gasto"), `WhatsApp ${money(A.gwa)} · Web ${money(A.gweb)}`, col.map(x => x.gasto)),
+    tile(`CAC · meta ≤${money(P.metas.cac)}`, t.cac == null ? "—" : money(t.cac), good(t.cac, "cac"), delta(t.cac, refW(w => tilesW(w).cac), "cac"), `WA ${aggW(CAMPS.filter(c => destC(c) === "wa"), s).cac == null ? "—" : money(aggW(CAMPS.filter(c => destC(c) === "wa"), s).cac)} · Web ${aggW(CAMPS.filter(c => destC(c) === "web"), s).cac == null ? "—" : money(aggW(CAMPS.filter(c => destC(c) === "web"), s).cac)}`, col.map(x => x.cac), P.metas.cac),
+    tile("Margen de contribución", `${sgn(t.margen)} <small>→ ${sgn(t.margenT)}</small>`, good(t.margen, "margen"), delta(t.margen, refW(w => tilesW(w).margen), "margen"), "atribuido → si todo lo sin origen fuera pauta", col.map(x => x.margen), 0),
+    tile(`ROAS · meta ≥${P.metas.roas.toFixed(1)}x`, t.roas == null ? "—" : `${t.roas.toFixed(2)}x <small>→ ${t.roasT.toFixed(2)}x</small>`, good(t.roas, "roas"), delta(t.roas, refW(w => tilesW(w).roas), "roas"), "piso: ingreso atribuido · techo: base completa", col.map(x => x.roas), P.metas.roas),
+    tile("CPL · por lead", t.cpl == null ? "—" : money(t.cpl), "", delta(t.cpl, refW(w => tilesW(w).cpl), "cpl"), "no confundir con CAC", col.map(x => x.cpl)),
+    tile(`Frecuencia · alerta >${P.metas.frecuencia.toFixed(1)}`, t.frec == null ? "—" : t.frec.toFixed(1), good(t.frec, "frec"), delta(t.frec, refW(w => tilesW(w).frec), "frec"), "ponderada por gasto; sube antes que el CAC", col.map(x => x.frec), P.metas.frecuencia),
+  ].join("");
+  const sinO = Math.max(0, t.B.n - t.ventas), tot = t.B.n || 1;
+  $("#s-origen-tot").innerHTML = `<b>${fmt(t.B.n)} ventas en la base</b>`;
+  $("#s-origen").innerHTML = `<i style="width:${100 * A.vwa / tot}%;background:var(--wa)" data-tip="WhatsApp: ${fmt(A.vwa)}"></i><i style="width:${100 * A.vweb / tot}%;background:var(--web)" data-tip="Web: ${fmt(A.vweb)}"></i><i class="hatch" style="width:${100 * sinO / tot}%" data-tip="Sin origen: ${fmt(sinO)}"></i>`;
+  $("#s-origen-leg").innerHTML = `<span><i class="sw" style="background:var(--wa)"></i>WhatsApp ${fmt(A.vwa)}</span><span><i class="sw" style="background:var(--web)"></i>Web ${fmt(A.vweb)}</span><span><i class="sw hatch"></i>Sin origen ${fmt(sinO)} · ${pct(sinO / tot, 0)}</span>`;
+  const lpvM = T.reduce((a, w) => a + CAMPS.reduce((b, c) => b + mcW(c, w).lpv, 0), 0), clM = T.reduce((a, w) => a + CAMPS.filter(c => destC(c) === "web").reduce((b, c) => b + mcW(c, w).clics_enlace, 0), 0);
+  $("#s-medicion").innerHTML = [
+    `<li><b>Base provisional:</b> Kommo (entrada a Pago Realizado) + compras de GA4. No es la base conciliada con Stripe y BBVA; una transferencia que no pase por Kommo no aparece.</li>`,
+    (W.wa_web[s] ? `<li>${fmt(W.wa_web[s])} compras web de la semana entraron por el link del asesor (cuentista / sasu): cuentan como WhatsApp, no como Web.</li>` : ""),
+    `<li>WhatsApp no se liga a campaña: los leads de Kommo no traen <code>ctwa_clid</code> ni UTM. Solo se atribuye cuando hay una sola campaña de WhatsApp activa.</li>`,
+    (clM ? `<li>El píxel de Meta registra ${fmt(lpvM)} visitas a la página contra ${fmt(clM)} clics al enlace en ${T.length} semanas: landing_page_view no está bien instalado. LPV% se mide con las sesiones de GA4.</li>` : ""),
+    (A.vweb != null ? (() => { const mw = CAMPS.filter(c => destC(c) === "web").reduce((a, c) => a + mcW(c, s).compras, 0); return mw > A.vweb ? `<li>Meta se atribuye ${fmt(mw)} compras web esta semana; GA4 liga solo ${fmt(A.vweb)} a una campaña por UTM. El tablero usa las de GA4: Meta cuenta también a quien vio el anuncio sin hacer clic.</li>` : ""; })() : ""),
+    (W.ga4_campana_rota ? `<li>${fmt(W.ga4_campana_rota)} sesiones llegaron con la campaña literal <code>{{campaign.name}}</code>: algún anuncio tiene mal el parámetro de URL.</li>` : ""),
+  ].join("");
+
+  /* tendencia */
+  const sel = CAMPS.filter(c => SW.sel.has(c)), m = SW.metrica;
+  document.querySelectorAll("#s-vista button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === SW.vista));
+  document.querySelectorAll("#s-metrica button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === m));
+  const warn = [];
+  const gs = aggW(sel, s).gasto, gp = aggW(sel, prevSem(s)).gasto;
+  if (gp && Math.abs(gs - gp) / gp > P.alertas.gasto_cambio && ["cac", "margen"].includes(m)) warn.push(`El gasto se movió ${gs > gp ? "+" : ""}${Math.round((gs - gp) / gp * 100)}% contra la semana anterior: el ${m === "cac" ? "CAC" : "margen"} de ${semCorta(s)} queda sesgado porque la venta llega días después del gasto.`);
+  if (m === "ventas" && SW.vista === "camp") warn.push("En volumen, una campaña sube porque recibió más presupuesto, no porque mejorara. Para juzgarla, léela en margen o CAC.");
+  $("#s-trend-warn").innerHTML = warn.map(w => `<div class="warn-bar">${w}</div>`).join("");
+  const notasT = SW.notas.filter(n => T.includes(n.semana));
+  $("#s-an-sem").innerHTML = T.map(x => `<option value="${x}" ${x === s ? "selected" : ""}>${semCorta(x)}</option>`).join("");
+  $("#s-an-list").innerHTML = notasT.map(n => `<span class="ach">${esc(n.texto)} · ${semCorta(n.semana)}<button type="button" data-del="${esc(n.id)}" aria-label="Quitar anotación">×</button></span>`).join("");
+  if (!sel.length) { $("#s-trend").innerHTML = `<p class="off-msg">Selecciona al menos una campaña en la tabla.</p>`; }
+  else if (SW.vista === "agr") {
+    const grupos = sel.length <= 4 ? sel.map((c, i) => ({n: nomC(c), cs: [c], col: DCOL[destC(c)], dash: sel.filter((x, j) => j < i && destC(x) === destC(c)).length ? "5 4" : ""}))
+      : ["wa", "web"].map(d => ({n: DNOM[d], cs: sel.filter(c => destC(c) === d), col: DCOL[d], dash: ""})).filter(g => g.cs.length);
+    trendChart($("#s-trend"), T, grupos.map(g => ({...g, v: T.map(w => valM(aggW(g.cs, w), m))})), metaM[m], notasT, curIdx, fmtM[m]);
+  } else {
+    $("#s-trend").innerHTML = `<p class="small muted" style="margin:0 0 8px">Clasificación sobre <b>${$("#s-metrica [aria-pressed=true]").textContent}</b>: compara las dos últimas semanas cerradas contra las dos previas.</p><div class="smalls">${sel.map(c => {
+      const v = T.map(w => valM(aggW([c], w), m)), closed = v.slice(0, curIdx >= 0 ? curIdx : v.length), last = closed[closed.length - 1];
+      const lb = etiqueta(closed, m, campW(c, s).ventas);
+      return `<div class="sm"><span class="h"><i class="dot" style="background:${DCOL[destC(c)]}"></i>${esc(nomC(c))}</span><span class="v">${fmtM[m](last)}<span class="lab ${lb[1]}">${lb[0]}</span></span>${spark(v, {goal: metaM[m], cur: curIdx >= 0, color: DCOL[destC(c)]})}</div>`; }).join("")}</div>`;
+  }
+
+  /* campañas */
+  document.querySelectorAll("#s-orden button").forEach(b => b.setAttribute("aria-pressed", b.dataset.o === SW.orden));
+  const filas = CAMPS.map(c => campW(c, s)).filter(x => x.gasto > 0 || SW.sel.has(x.c) && T.some(w => mcW(x.c, w).gasto > 0));
+  const leadsTot = filas.reduce((a, x) => a + (x.leads || 0), 0);
+  filas.sort((a, b) => SW.orden === "gasto" ? b.gasto - a.gasto : (b.margen ?? -1e9) - (a.margen ?? -1e9));
+  const cel = x => {
+    const lpv = x.lpv == null ? "—" : `<span class="${x.lpv < P.alertas.lpv_min ? "red" : ""}">${pct(x.lpv, 0)}</span>`;
+    const sh = leadsTot ? (x.leads || 0) / leadsTot : 0;
+    return [`${fmt(x.gasto) === "0" ? "$0" : money(x.gasto)}`, lpv, fmt(x.leads || 0),
+      `${pct(sh, 0)}<span class="sharebar"><i style="width:${100 * sh}%;background:${DCOL[x.d]}"></i></span>`,
+      `<span class="${x.frec > P.metas.frecuencia ? "amb" : ""}">${x.frec ? x.frec.toFixed(1) : "—"}</span>`,
+      x.cpl == null ? "—" : money(x.cpl),
+      x.ventas == null ? `<span class="muted" data-tip="Venta de WhatsApp sin campaña: hay más de una campaña de WhatsApp activa.">—</span>` : x.ventas === 0 ? `<span class="muted">sin ventas</span>` : `<span class="${x.cac > P.metas.cac ? "red" : ""}" ${x.supone ? `data-tip="Supone que toda venta de WhatsApp de la semana viene de esta campaña."` : ""}>${money(x.cac)}${x.supone ? "*" : ""}</span>`,
+      x.fis == null ? "—" : pct(x.fis, 0),
+      x.margen == null ? "—" : `<span class="${x.margen >= 0 ? "grn" : "red"}">${sgn(x.margen)}</span>`];
+  };
+  let body = "";
+  filas.forEach(x => {
+    const on = SW.sel.has(x.c), open = SW.abiertas.has(x.c);
+    body += `<tr class="${on ? "" : "off"}"><td class="cb"><input type="checkbox" data-sel="${x.c}" ${on ? "checked" : ""} aria-label="Incluir ${esc(nomC(x.c))}"></td><td class="name"><button class="tri" type="button" data-tri="${x.c}" aria-label="Ver conjuntos">${open ? "▼" : "▶"}</button><i class="dot" style="background:${DCOL[x.d]}"></i>${esc(nomC(x.c))}</td>${cel(x).map(v => `<td>${v}</td>`).join("")}</tr>`;
+    if (open) Object.entries(W.conjuntos).filter(([, a]) => a.campana === x.c).forEach(([id, a]) => {
+      const q = W.ma[id]?.[s]; if (!q || !q.gasto) return;
+      const ld = x.d === "wa" ? q.conversaciones : null;
+      body += `<tr class="sub"><td></td><td class="name" style="padding-left:34px">${esc(a.nombre)}</td><td>${money(q.gasto)}</td><td>—</td><td>${ld == null ? "—" : fmt(ld)}</td><td></td><td>${q.frec ? q.frec.toFixed(1) : "—"}</td><td>${ld ? money(q.gasto / ld) : "—"}</td><td>—</td><td>—</td><td>—</td></tr>`;
+    });
+  });
+  const S_ = aggW(sel, s), webSel = sel.filter(c => destC(c) === "web"), cl = webSel.reduce((a, c) => a + mcW(c, s).clics_enlace, 0), la = webSel.reduce((a, c) => a + webW(c, s).landing, 0);
+  body += `<tr class="tot"><td></td><td>Seleccionado · ${sel.length} de ${filas.length}</td><td>${money(S_.gasto)}</td><td>${cl ? pct(la / cl, 0) : "—"}</td><td>${fmt(S_.leads)}</td><td>${pct(leadsTot ? S_.leads / leadsTot : 0, 0)}</td><td>${S_.frec ? S_.frec.toFixed(1) : "—"}</td><td>${S_.cpl == null ? "—" : money(S_.cpl)}</td><td>${S_.cac == null ? "—" : money(S_.cac)}</td><td>—</td><td><span class="${S_.margen >= 0 ? "grn" : "red"}">${sgn(S_.margen)} tot.</span></td></tr>`;
+  $("#s-camp").innerHTML = `<thead><tr><th class="cb"></th><th>Campaña</th><th>Gasto</th><th>LPV%</th><th>Leads</th><th>Share</th><th>Frec</th><th>CPL</th><th>CAC</th><th>% fís</th><th>Margen</th></tr></thead><tbody>${body}</tbody>`;
+
+  /* funnels */
+  const waSel = sel.filter(c => destC(c) === "wa"), waAll = CAMPS.filter(c => destC(c) === "wa");
+  const cerr = T.filter(w => w !== W.en_curso);
+  const fwa = $("#s-fwa");
+  if (!waSel.length) fwa.innerHTML = `<h3><i class="dot" style="background:var(--wa)"></i> Funnel WhatsApp</h3><p class="off-msg">Ninguna campaña de WhatsApp seleccionada: el funnel se apaga en vez de mostrar el total.</p>`;
+  else {
+    const n = W.wa_funnel[s] || Array(W.pasos_wa.length).fill(0), gw = aggW(waSel, s), v = waV(s), u = unidad(shareFis(v.fis, v.dig) ?? FIS0);
+    const cac = v.n ? gw.gasto / v.n : null, conv = waSel.reduce((a, c) => a + mcW(c, s).conversaciones, 0);
+    const prom = W.pasos_wa.map((_, i) => { const xs = cerr.map(w => W.wa_funnel[w]).filter(f => f && f[0]).map(f => f[i] / f[0]); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; });
+    fwa.innerHTML = `<div class="panel-h" style="margin:0"><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--wa)"></i>Funnel WhatsApp</h3><span class="small muted">${waSel.length} de ${waAll.length} campañas</span></div>
+      <div class="chips"><span>${fmt(n[0])} entradas</span><span><b>${fmt(v.n)}</b> ventas</span><span>CVR <b>${pct(n[0] ? n[n.length - 1] / n[0] : NaN, 0)}</b></span><span>CPL ${conv ? money(gw.gasto / conv) : "—"}</span><span>CAC <b>${cac == null ? "—" : money(cac)}</b></span><span>Margen/venta <b class="${cac != null && u.mu - cac >= 0 ? "grn" : "red"}">${cac == null ? "—" : sgn(u.mu - cac)}</b></span></div>
+      ${funnelTabla(W.pasos_wa, n, null, prom, "var(--wa)")}
+      <p class="note">Entradas = leads nuevos en Kommo de la semana (sin Leadsales ni migrados). “Formato elegido” reemplaza a “Precio presentado”, que Kommo no registra. No se filtra por campaña: los leads no traen ctwa_clid. CPL usa las conversaciones que reporta Meta.</p>`;
+  }
+  const fweb = $("#s-fweb"), webAll = CAMPS.filter(c => destC(c) === "web");
+  /* "Lead (datos)" no tiene evento propio en GA4 (/login no sigue el orden del configurador): se muestra sin medir. */
+  const pasosW = w => ["landing", "config", "brief", "lead", "checkout", "pago"].map(k => k === "lead" ? null : w.reduce((a, c) => a + webW(c, s)[k], 0));
+  if (!webSel.length) fweb.innerHTML = `<h3><i class="dot" style="background:var(--web)"></i> Funnel Web</h3><p class="off-msg">Ninguna campaña web seleccionada: el funnel se apaga en vez de mostrar el total.</p>`;
+  else {
+    const n = pasosW(webSel), base = webSel.length < webAll.length ? pasosW(webAll) : null, gw = aggW(webSel, s);
+    const f = shareFis(webSel.reduce((a, c) => a + webW(c, s).fis, 0), webSel.reduce((a, c) => a + webW(c, s).dig, 0)) ?? FIS0, u = unidad(f), cac = n[5] ? gw.gasto / n[5] : null;
+    const prom = W.pasos_web.map((_, i) => { const xs = cerr.map(w => { const k = ["landing", "config", "brief", "lead", "checkout", "pago"]; const a = webSel.reduce((q, c) => q + webW(c, w).landing, 0); return a && k[i] !== "lead" ? webSel.reduce((q, c) => q + webW(c, w)[k[i]], 0) / a : null; }).filter(x => x != null); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; });
+    fweb.innerHTML = `<div class="panel-h" style="margin:0"><h3 style="display:flex;gap:8px;align-items:center"><i class="dot" style="background:var(--web)"></i>Funnel Web</h3><span class="small muted">${webSel.length} de ${webAll.length} campañas</span></div>
+      <div class="chips"><span>${fmt(n[0])} entradas</span><span><b>${fmt(n[5])}</b> ventas</span><span>CVR <b>${pct(n[0] ? n[5] / n[0] : NaN, 1)}</b></span><span>CPL ${n[1] ? money(gw.gasto / n[1]) : "—"}</span><span>CAC <b>${cac == null ? "—" : money(cac)}</b></span><span>Margen/venta <b class="${cac != null && u.mu - cac >= 0 ? "grn" : "red"}">${cac == null ? "—" : sgn(u.mu - cac)}</b></span></div>
+      ${funnelTabla(W.pasos_web, n, base, prom, "var(--web)")}
+      <p class="note">Sesiones de GA4 que llegaron con la UTM de la campaña. Brief completo = llegó a “resumen y confirmación” del configurador. Lead (datos de contacto) queda sin medir hasta instalar el evento <code>lead</code>. Tráfico directo y orgánico queda fuera: no es de pauta.</p>`;
+  }
+}
+function funnelTabla(pasos, n, base, prom, color, promLab = "Prom 6s") {
+  /* pérdida contra el último escalón medido; un escalón sin medir (null) no pierde ni gana */
+  const n0 = n[0] || 0, loss = n.map((v, i) => { if (!i || v == null) return null; let j = i - 1; while (j > 0 && n[j] == null) j--; return (n[j] - v) / (n0 || 1) * 100; });
+  const top2 = loss.map((l, i) => [l, i]).filter(x => x[0] != null && x[0] > 0).sort((a, b) => b[0] - a[0]).slice(0, 2).map(x => x[1]);
+  const rows = pasos.map((p, i) => { if (n[i] == null) return `<tr class="low"><td>${p}</td><td class="bcell"><div class="fbar hatch"></div></td><td colspan="4" style="text-align:left">sin medir · falta el evento <code>lead</code> en GA4</td></tr>`;
+    const pt = n0 ? n[i] / n0 : 0, bt = base && base[0] ? base[i] / base[0] : null, low = n[i] < P.min_casos_funnel, pr = prom[i];
+    return `<tr class="${low ? "low" : ""}"><td>${p}</td><td class="bcell"><div class="fbar">${bt != null ? `<i class="base" style="width:${Math.min(100, bt * 100)}%"></i>` : ""}<i class="v" style="width:${Math.min(100, pt * 100)}%;background:${color}"></i></div></td>
+      <td>${low ? "• " : ""}${fmt(n[i])}</td><td>${pct(pt, pt < .1 ? 1 : 0)}</td><td class="muted">${pr == null ? "—" : pct(pr, pr < .1 ? 1 : 0)}<br><small>${pr == null ? "" : ((pt - pr) * 100 >= 0 ? "+" : "") + ((pt - pr) * 100).toFixed(1)}</small></td>
+      <td>${i === 0 ? "—" : `<span class="loss ${top2.includes(i) ? "big" : ""}">${loss[i] > 0 ? "−" : "+"}${Math.abs(loss[i]).toFixed(1)}</span>`}</td></tr>`; }).join("");
+  return `<div class="tbl" style="border:0"><table class="ftab"><thead><tr><th>Etapa</th><th>% del tope</th><th>n</th><th>% tope</th><th>${promLab}</th><th>Pérdida</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <p class="small muted" style="margin:0">Pérdida = puntos sobre los ${fmt(n0)} que entraron · rojo = las dos mayores pérdidas · • menos de ${P.min_casos_funnel} casos${base ? " · barra gris = promedio de todo el destino" : ""}</p>`;
+}
+function etiqueta(v, m, ventasSem) {
+  if (["ventas", "cac", "margen"].includes(m) && (ventasSem ?? 0) < P.etiquetas.min_ventas) return ["Muestra baja", "lo"];
+  const x = v.filter(a => a != null && isFinite(a)); if (x.length < 4) return ["Muestra baja", "lo"];
+  const med = median(x.map(Math.abs)), mx = Math.max(...x.map(Math.abs)), im = x.map(Math.abs).indexOf(mx), last = Math.abs(x[x.length - 1]);
+  if (med && mx >= P.etiquetas.pico * med && im < x.length - 1 && Math.abs(last - med) / med < P.etiquetas.cambio) return ["Pico y regreso", "pk"];
+  const l2 = (x[x.length - 1] + x[x.length - 2]) / 2, p2 = (x[x.length - 3] + x[x.length - 4]) / 2;
+  if (!p2) return ["Estable", "eq"];
+  const ch = (l2 - p2) / Math.abs(p2), mejor = mejorArriba[m] ? ch : -ch;
+  return mejor > P.etiquetas.cambio ? ["Ganando tracción", "up"] : mejor < -P.etiquetas.cambio ? ["Perdiendo fuerza", "dn"] : ["Estable", "eq"];
+}
+function trendChart(el, T, series, goal, notas, curIdx, fv) {
+  const Wd = 760, h = 260, pad = {l: 56, r: 64, t: 28, b: 28}, iw = Wd - pad.l - pad.r, ih = h - pad.t - pad.b;
+  const all = series.flatMap(s => s.v).filter(v => v != null && isFinite(v)).concat(goal != null ? [goal] : []);
+  if (!all.length) { el.innerHTML = `<p class="empty">Sin datos para esta métrica.</p>`; return; }
+  let mn = Math.min(0, ...all), mx = Math.max(...all); if (mx === mn) mx = mn + 1;
+  const step = niceStep(mx - mn), lo = Math.floor(mn / step) * step, hi = Math.ceil(mx / step) * step;
+  const X = i => pad.l + (T.length === 1 ? iw / 2 : iw * i / (T.length - 1)), Y = v => pad.t + ih - ih * (v - lo) / (hi - lo);
+  let g = "";
+  if (curIdx >= 0) g += `<rect x="${X(curIdx) - iw / (T.length - 1) / 2}" y="${pad.t}" width="${iw / (T.length - 1) / 2 + 8}" height="${ih}" fill="var(--line-2)"/>`;
+  for (let v = lo; v <= hi + 1e-9; v += step) g += `<line x1="${pad.l}" x2="${Wd - pad.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${pad.l - 8}" y="${Y(v) + 4}" text-anchor="end">${fv(v)}</text>`;
+  T.forEach((w, i) => g += `<text x="${X(i)}" y="${h - 8}" text-anchor="middle" ${w === SW.sem ? 'class="lab"' : ""}>${semCorta(w)}</text>`);
+  if (goal != null) g += `<line x1="${pad.l}" x2="${Wd - pad.r}" y1="${Y(goal)}" y2="${Y(goal)}" stroke="var(--avance)" stroke-dasharray="6 5" stroke-width="1.5"/><text x="${Wd - pad.r + 6}" y="${Y(goal) + 4}" fill="var(--avance)" style="fill:var(--avance)">meta</text>`;
+  notas.forEach(n => { const i = T.indexOf(n.semana); if (i < 0) return; g += `<line x1="${X(i)}" x2="${X(i)}" y1="${pad.t}" y2="${pad.t + ih}" stroke="var(--wa)" stroke-dasharray="3 4" stroke-width="1.5"/><text x="${X(i)}" y="${pad.t - 10}" text-anchor="middle" style="fill:var(--wa)">${esc(n.texto)}</text>`; });
+  series.forEach(s => {
+    const pts = s.v.map((v, i) => [i, v]).filter(p => p[1] != null && isFinite(p[1]));
+    g += `<polyline points="${pts.map(p => `${X(p[0])},${Y(p[1])}`).join(" ")}" fill="none" stroke="${s.col}" stroke-width="2.2" stroke-dasharray="${s.dash}" stroke-linejoin="round"/>`;
+    pts.forEach(p => g += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${p[0] === curIdx ? 5 : 4}" fill="${p[0] === curIdx ? "var(--card)" : s.col}" stroke="${s.col}" stroke-width="2" data-tip="<b>${esc(s.n)}</b><br>${semLabel(T[p[0]])}${p[0] === curIdx ? " (en curso)" : ""}<br>${fv(p[1])}"/>`);
+    const l = pts[pts.length - 1]; if (l) g += `<text x="${X(l[0]) + 9}" y="${Y(l[1]) + 4}" class="lab">${fv(l[1])}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${Wd} ${h}" role="img">${g}</svg><div class="legend">${series.map(s => `<span><i class="sw" style="background:${s.col}"></i>${esc(s.n)}</span>`).join("")}${curIdx >= 0 ? `<span><i class="sw" style="background:var(--line-2);border:1px solid var(--line)"></i>semana en curso</span>` : ""}${goal != null ? `<span><i class="sw" style="background:none;border-top:2px dashed var(--avance);height:0;border-radius:0"></i>meta</span>` : ""}</div>`;
+}
+/* eventos del bloque semanal */
+$("#s-sem").onchange = e => { SW.sem = e.target.value; renderSemanal(); };
+document.querySelectorAll("#s-comp button").forEach(b => b.onclick = () => { SW.comp = b.dataset.c; renderSemanal(); });
+document.querySelectorAll("#s-vista button").forEach(b => b.onclick = () => { SW.vista = b.dataset.v; renderSemanal(); });
+document.querySelectorAll("#s-metrica button").forEach(b => b.onclick = () => { SW.metrica = b.dataset.m; renderSemanal(); });
+document.querySelectorAll("#s-orden button").forEach(b => b.onclick = () => { SW.orden = b.dataset.o; renderSemanal(); });
+$("#s-todas").onclick = () => { CAMPS.forEach(c => SW.sel.add(c)); renderSemanal(); };
+$("#s-ninguna").onclick = () => { SW.sel.clear(); renderSemanal(); };
+$("#s-notas").onclick = e => { const on = document.body.classList.toggle("notas"); e.currentTarget.setAttribute("aria-pressed", on); };
+$("#s-camp").addEventListener("click", e => { const t = e.target.closest("[data-tri]"); if (t) { const c = t.dataset.tri; SW.abiertas.has(c) ? SW.abiertas.delete(c) : SW.abiertas.add(c); renderSemanal(); } });
+$("#s-camp").addEventListener("change", e => { const c = e.target.dataset.sel; if (!c) return; e.target.checked ? SW.sel.add(c) : SW.sel.delete(c); renderSemanal(); });
+/* anotaciones compartidas: se guardan en la base del artefacto y sobreviven a cada actualización de datos */
+let DBA = null;
+(async () => {
+  try { DBA = await window.claude?.use?.("db"); } catch (e) { DBA = null; }
+  if (!DBA) { $("#s-an-add").disabled = true; $("#s-an-msg").textContent = "Las anotaciones se guardan en la página publicada."; return; }
+  DBA.collection("anotaciones").onSnapshot(snap => { SW.notas = snap.docs.map(d => ({id: d.id, ...d.data()})).filter(n => n.semana && n.texto); if (S.tab === "semanal") renderSemanal(); },
+    () => { $("#s-an-msg").textContent = "No se pudieron cargar las anotaciones."; });
+})();
+$("#s-an-add").onclick = async () => {
+  const texto = $("#s-an-txt").value.trim(), semana = $("#s-an-sem").value; if (!texto || !DBA) return;
+  $("#s-an-add").disabled = true;
+  try { await DBA.collection("anotaciones").add({semana, texto: texto.slice(0, 60), creado: new Date().toISOString()}); $("#s-an-txt").value = ""; $("#s-an-msg").textContent = "Anotación guardada."; }
+  catch (e) { $("#s-an-msg").textContent = "No se guardó: necesitas permiso de edición en esta página."; }
+  finally { $("#s-an-add").disabled = false; }
+};
+$("#s-an-list").addEventListener("click", async e => { const b = e.target.closest("[data-del]"); if (!b || !DBA) return;
+  try { await DBA.collection("anotaciones").doc(b.dataset.del).delete(); } catch (err) { $("#s-an-msg").textContent = "No se pudo quitar: necesitas permiso de edición."; } });
+
+/* ════════════════ RESUMEN ════════════════ */
+function periodoAnt() { const n = Math.round((new Date(S.hasta + "T12:00:00") - new Date(S.desde + "T12:00:00")) / 864e5) + 1, h = addDays(S.desde, -1); return [addDays(h, -(n - 1)), h, n]; }
+function metaRango(d0, d1) {
+  const o = {inv: 0, iw: 0, ia: 0, imp: 0, ce: 0, cew: 0, com: 0, conv: 0};
+  for (const r of M.diario) { if (r[0] < d0 || r[0] > d1) continue; const t = tipoCamp(M.anuncios[r[1]].campana);
+    o.inv += r[2]; o.imp += r[3]; o.ce += r[5]; o.com += r[9]; o.conv += r[11]; if (t === "web") { o.iw += r[2]; o.cew += r[5]; } else if (t === "wa") o.ia += r[2]; }
+  return o;
+}
+function ventasRango(d0, d1) {
+  const wa = K.leads.filter(l => !l.mig && l.pg && l.pgd && l.pgd >= d0 && l.pgd <= d1);
+  let web = 0, link = 0; for (const r of G.fw) if (r[3] === 5 && r[0] >= d0 && r[0] <= d1) r[2] ? link += r[4] : web += r[4];
+  const fis = wa.filter(l => l.f === "Físico").length, dig = wa.filter(l => l.f === "Digital").length;
+  const f = fis + dig ? (fis + (wa.length - fis - dig) * FIS0) / wa.length : FIS0;
+  const u = unidad((f * wa.length + FIS0 * web) / Math.max(1, wa.length + web));
+  const n = wa.length + web;
+  return {wa: wa.length, web, link, n, ingreso: n * u.ticket, margenU: u.mu};
+}
+function ffRango(d0, d1) { const n = Array(10).fill(0); for (const r of G.ff) if (!r[2] && r[0] >= d0 && r[0] <= d1) n[r[3]] += r[4]; return n; }
+function waRango(d0, d1) {
+  const L = K.leads.filter(l => !l.mig && !l.lsa && l.d >= d0 && l.d <= d1);
+  const paso = l => { const adv = !!(l.fs.finalizado || l.fs.pendiente_pago || l.pg), pen = !!(l.fs.pendiente_pago || l.pg);
+    const p = [true, l.tm || adv, l.bc || adv, pen, !!l.pg]; for (let i = p.length - 2; i >= 0; i--) p[i] = p[i] || p[i + 1]; return p; };
+  const n = [0, 0, 0, 0, 0]; L.forEach(l => paso(l).forEach((ok, i) => n[i] += ok ? 1 : 0)); return n;
+}
+function camino(pasos, inv) {
+  return `<div class="tbl" style="border:0"><table class="ftab"><thead><tr><th>Paso</th><th>n</th><th>Pasa del anterior</th><th>Costo por</th></tr></thead><tbody>${pasos.map(([nm, v, nota], i) => {
+    const prev = i ? pasos[i - 1][1] : null, r = prev ? v / prev : null, low = r != null && r < .35;
+    return `<tr><td>${nm}${nota ? `<br><small class="muted">${nota}</small>` : ""}</td><td><b>${fmt(v)}</b></td><td>${i ? `<span class="${low ? "red" : ""}">${pct(r, r < .1 ? 1 : 0)}</span>` : "—"}</td><td>${v ? money(inv / v) : "—"}</td></tr>`; }).join("")}</tbody></table></div>`;
+}
+/* Ventas reales: Supabase · checkout_sessions. Fila = [fecha, estado, monto, físicos, digitales, cupón, utm_campaign, utm_source] */
+const SB = DATA.supabase || [], SB_PAGO = r => r[1] === "completed" || r[1] === "paid";
+const CAMP_META = new Set(Object.values(M.campanas).map(c => c.nombre));
+function sbRango(d0, d1) {
+  const o = {n: 0, ing: 0, fis: 0, dig: 0, cup: 0, utm: 0, creados: 0, transf: 0};
+  for (const r of SB) { if (r[0] < d0 || r[0] > d1) continue; o.creados++; if (r[1] === "pending_bank_transfer") o.transf++;
+    if (!SB_PAGO(r)) continue; o.n++; o.ing += r[2]; o.fis += r[3]; o.dig += r[4]; o.cup += r[5]; if (r[6] && CAMP_META.has(r[6])) o.utm++; }
+  /* costo variable: producción por cuento + comisión de Stripe por pago (parámetros del tablero) */
+  o.costo = o.fis * P.produccion.fisico + o.dig * P.produccion.digital + o.n * P.stripe.fijo + o.ing * P.stripe.porcentaje;
+  return o;
+}
+const finMes = ym => { const [y, m] = ym.split("-").map(Number); return iso(new Date(Date.UTC(y, m, 0))); };
+function renderResumen() {
+  const [pD, pH, largo] = periodoAnt();
+  const m = metaRango(S.desde, S.hasta), mp = metaRango(pD, pH), v = ventasRango(S.desde, S.hasta), vp = ventasRango(pD, pH);
+  const ff = ffRango(S.desde, S.hasta), ffp = ffRango(pD, pH), wa = waRango(S.desde, S.hasta);
+  $("#r-sub").textContent = `${fechaLarga(S.desde)} – ${fechaLarga(S.hasta)} · comparado con los ${largo} días anteriores. Ventas e ingreso: pagos completados en el sitio (Supabase). Etapas del funnel: Kommo (WhatsApp) y GA4 (web).`;
+  const dl = (a, b, arriba) => { if (!isFinite(a) || !isFinite(b) || !b) return ""; const c = (a - b) / Math.abs(b), ok = (c > 0) === arriba; return `<span style="font-weight:700;color:${Math.abs(c) < .01 ? "var(--muted)" : ok ? "var(--avance)" : "var(--salida)"}">${c > 0 ? "▲" : "▼"} ${Math.abs(Math.round(c * 100))}% vs ant.</span> · `; };
+  const s = sbRango(S.desde, S.hasta), sp = sbRango(pD, pH);
+  const cac = div(m.inv, s.n), cacp = div(mp.inv, sp.n), roas = div(s.ing, m.inv), roasp = div(sp.ing, mp.inv);
+  const margen = s.ing - s.costo - m.inv, margenp = sp.ing - sp.costo - mp.inv;
+  const tk = div(s.ing, s.n), tkp = div(sp.ing, sp.n), chk = div(s.n, s.creados), chkp = div(sp.n, sp.creados);
+  $("#r-kpis").innerHTML = [
+    kpi("Ventas", fmt(s.n), `${dl(s.n, sp.n, true)}${fmt(s.fis)} físicos · ${fmt(s.dig)} digitales`),
+    kpi("Ingreso real", money(s.ing), `${dl(s.ing, sp.ing, true)}cobrado en el sitio (Supabase)`),
+    kpi("Ticket promedio", isFinite(tk) ? money(tk) : "—", `${dl(tk, tkp, true)}${fmt(s.cup)} con cupón`),
+    kpi("Inversión en Meta", money(m.inv), `${dl(m.inv, mp.inv, false)}WhatsApp ${money(m.ia)} · Web ${money(m.iw)}`),
+    kpi("Costo por venta", isFinite(cac) ? `<span class="${cac <= P.metas.cac ? "grn" : "red"}">${money(cac)}</span>` : "—", `${dl(cac, cacp, false)}meta ≤ ${money(P.metas.cac)}`),
+    kpi("ROAS real", isFinite(roas) ? `<span class="${roas >= P.metas.roas ? "grn" : roas < 1 ? "red" : ""}">${roas.toFixed(2)}x</span>` : "—", `${dl(roas, roasp, true)}ingreso real ÷ inversión · meta ≥ ${P.metas.roas.toFixed(1)}x`),
+    kpi("Margen de contribución", `<span class="${margen >= 0 ? "grn" : "red"}">${margen < 0 ? "−" : ""}${money(Math.abs(margen))}</span>`, `${isFinite(margenp) ? `antes ${margenp < 0 ? "−" : ""}${money(Math.abs(margenp))} · ` : ""}ingreso − producción − Stripe − pauta`),
+    kpi("Pagos completados", isFinite(chk) ? pct(chk, 0) : "—", `${dl(chk, chkp, true)}${fmt(s.n)} de ${fmt(s.creados)} intentos de pago`),
+  ].join("");
+
+  /* ventas reales por mes */
+  const meses = [...new Set(SB.map(r => r[0].slice(0, 7)))].sort(), mesAct = hoy.slice(0, 7);
+  const filasMes = meses.map(ym => { const d0 = ym + "-01", d1 = finMes(ym), x = sbRango(d0, d1), mm = metaRango(d0, d1), hayMeta = d1 >= DATA.inicio;
+    return {ym, x, inv: hayMeta ? mm.inv : null, cur: ym === mesAct}; });
+  const nomMes = ym => { const [y, mo] = ym.split("-").map(Number); return MES[mo - 1] + " " + String(y).slice(2); };
+  barras($("#r-mes"), filasMes.map(f => ({x: nomMes(f.ym) + (f.cur ? "*" : ""), v: f.x.ing, n: f.x.n, c: f.cur ? "var(--sinmedir)" : "var(--avance)"})),
+    {h: 240, w: 980, label: it => fmt(it.n), tipf: it => `<b>${it.x}</b><br>${fmt(it.n)} ventas<br>${money(it.v)} cobrados`});
+  tabla($("#r-mestab"), ["Mes", "Ventas", "Ingreso", "Ticket", "% físico", "Con UTM de pauta", "Inversión Meta", "Costo por venta", "ROAS", "Margen"],
+    filasMes.slice().reverse().map(f => { const x = f.x, mg = f.inv == null ? null : x.ing - x.costo - f.inv, r = f.inv ? x.ing / f.inv : null, c = f.inv != null && x.n ? f.inv / x.n : null;
+      return [`${nomMes(f.ym)}${f.cur ? " <span class='pill otro'>en curso</span>" : ""}`, fmt(x.n), money(x.ing), x.n ? money(x.ing / x.n) : "—", pct(div(x.fis, x.fis + x.dig), 0), pct(div(x.utm, x.n), 0),
+        f.inv == null ? "—" : money(f.inv), c == null ? "—" : `<span class="${c <= P.metas.cac ? "grn" : "red"}">${money(c)}</span>`, r == null ? "—" : `<span class="${r >= P.metas.roas ? "grn" : r < 1 ? "red" : ""}">${r.toFixed(2)}x</span>`,
+        mg == null ? "—" : `<span class="${mg >= 0 ? "grn" : "red"}">${mg < 0 ? "−" : ""}${money(Math.abs(mg))}</span>`]; }));
+
+  /* hallazgos priorizados */
+  const F = [];
+  if (isFinite(chk) && isFinite(chkp) && s.creados >= 10 && chk < chkp * .85) F.push([3, finding("crit", "Pago", `Se completan ${pct(chk, 0)} de los intentos de pago; antes ${pct(chkp, 0)}`, `${fmt(s.creados)} intentos de pago en el sitio y ${fmt(s.n)} cobrados (Supabase). Es la última pantalla: la gente ya decidió comprar.`, "Hacer una compra de prueba y revisar pagos fallidos o pendientes en Stripe.")]);
+  if (isFinite(roas) && m.inv > 1000) F.push([roas < 1 ? 3 : roas < P.metas.roas ? 2 : 1, finding(roas < 1 ? "crit" : roas < P.metas.roas ? "warn" : "good", "Rentabilidad", `Por cada $1 en Meta entran $${roas.toFixed(2)} de venta real`, `${money(s.ing)} cobrados contra ${money(m.inv)} de inversión. Meta del brief: ${P.metas.roas.toFixed(1)}x. Margen después de producción, Stripe y pauta: ${margen < 0 ? "−" : ""}${money(Math.abs(margen))}.`, roas < P.metas.roas ? "Mover presupuesto hacia lo que trae venta más barata (ver “Canal”) antes de subir inversión." : "")]);
+  const invWaK = div(m.ia, v.wa), invWebK = div(m.iw, v.web);
+  if (isFinite(invWaK) && isFinite(invWebK)) { const barato = invWaK < invWebK ? "WhatsApp" : "la web", ratio = Math.max(invWaK, invWebK) / Math.min(invWaK, invWebK);
+    F.push([ratio > 2 ? 2 : 1, finding(ratio > 2 ? "warn" : "info", "Canal", `Una venta por ${barato} cuesta ${ratio.toFixed(1)} veces menos`, `WhatsApp: ${money(invWaK)} por venta (${fmt(v.wa)} ventas). Web: ${money(invWebK)} por venta (${fmt(v.web)} ventas). Meta del negocio: ${money(P.metas.cac)}.`, ratio > 2 ? `Revisar el reparto de presupuesto hacia ${barato} y medir dos semanas.` : "")]); }
+  if (ff[0] >= 50) { const pasos = G.pasos_form, perd = pasos.slice(1).map((p, i) => ({p, de: pasos[i], pts: (ff[i] - ff[i + 1]) / ff[0] * 100})).sort((a, b) => b.pts - a.pts)[0];
+    F.push([2, finding("warn", "Formulario web", `De cada 100 que empiezan su cuento, ${Math.round(perd.pts)} se van entre ${perd.de} y ${perd.p}`, `${fmt(ff[0])} empezaron el configurador y ${fmt(ff[7])} compraron (${pct(div(ff[7], ff[0]), 1)}).`, `Revisar qué pide la pantalla “${perd.p}” y probar simplificarla.`)]); }
+  if (wa[0] >= 30) { const nm = ["Conversación", "Tema definido", "Brief completo", "Cierre solicitado", "Pago"], perd = nm.slice(1).map((p, i) => ({p, pts: (wa[i] - wa[i + 1]) / wa[0] * 100})).sort((a, b) => b.pts - a.pts)[0];
+    F.push([2, finding("warn", "WhatsApp", `El ${Math.round(perd.pts)}% de las conversaciones se pierde antes de “${perd.p}”`, `${fmt(wa[0])} leads nuevos en Kommo, ${fmt(wa[4])} pagaron (${pct(div(wa[4], wa[0]), 1)}).`, perd.p === "Tema definido" ? "Revisar el primer intercambio de la IA: es donde la gente deja de contestar." : "Aplicar la cadencia de seguimiento de esa fase.")]); }
+  const ppV = K.leads.filter(l => !l.mig && faseDe(l.st) === "pendiente_pago" && l.fs.pendiente_pago && !l.fs.pendiente_pago[1] && (K.ahora - l.fs.pendiente_pago[0]) / 86400 > 5).length;
+  if (ppV) F.push([3, finding("crit", "Dinero en espera", `${fmt(ppV)} clientes llevan más de 5 días en Pendiente de pago`, `Ya pidieron su cuento y no han pagado: unos ${money(ppV * unidad(FIS0).ticket)} en ventas posibles.`, "Abrir Kommo → “Para actuar hoy” y enviar el toque de cierre.")]);
+  const topW = aggMeta(ad => tipoCamp(ad.campana) === "web" ? ad.nombre : null).filter(a => a.com >= 3).sort((a, b) => a.inv / a.com - b.inv / b.com)[0];
+  if (topW) F.push([1, finding("good", "Mejor anuncio web", esc(topW.k), `${fmt(topW.com)} compras a ${money(topW.inv / topW.com)} cada una.`, "Darle más presupuesto y hacer variaciones de ese creativo.")]);
+  if (m.cew > 500) { const lp = M.diario.filter(r => enRango(r[0]) && tipoCamp(M.anuncios[r[1]].campana) === "web").reduce((a, r) => a + r[6], 0);
+    if (lp < m.cew * .2) F.push([1, finding("info", "Medición", "Meta casi no ve quién llega al sitio", `${fmt(lp)} visitas registradas por el píxel contra ${fmt(m.cew)} clics al enlace: Meta optimiza a ciegas.`, "Agregar en Tag Manager el PageView y los pasos del formulario.")]); }
+  F.sort((a, b) => b[0] - a[0]);
+  $("#r-find").innerHTML = F.slice(0, 5).map(x => x[1]).join("") || `<p class="empty">Sin hallazgos en el periodo.</p>`;
+
+  /* caminos */
+  const convK = K.leads.filter(l => !l.mig && !l.lsa && enRango(l.d)).length;
+  $("#r-wa").innerHTML = `<p class="small muted" style="margin:0 0 8px">Meta reporta <b>${fmt(m.conv)}</b> conversaciones iniciadas por la pauta; Kommo recibe además las orgánicas.</p>` + camino([["Leads nuevos en Kommo", wa[0], "sin Leadsales ni migrados"], ["Tema definido", wa[1]], ["Brief completo", wa[2]], ["Cierre solicitado", wa[3], "Pendiente Pago"], ["Pago", wa[4], "de los leads que entraron en el periodo"]], m.ia) +
+    `<p class="note">Costo por = inversión de las campañas de WhatsApp (${money(m.ia)}) ÷ cada paso. Supone que los leads de WhatsApp vienen de la pauta: Kommo no guarda de qué anuncio llegan.</p>`;
+  $("#r-web").innerHTML = `<p class="small muted" style="margin:0 0 8px">Las campañas de ventas generaron <b>${fmt(m.cew)}</b> clics al enlace; el sitio recibe además tráfico directo y orgánico.</p>` + camino([["Sesiones en el sitio", ff[8], "todos los canales"], ["Empieza su cuento", ff[0]], ["Llega al resumen", ff[5]], ["Checkout", ff[6]], ["Compra", ff[7]]], m.iw) +
+    `<p class="note">Costo por = inversión de las campañas de ventas (${money(m.iw)}) ÷ cada paso. Las sesiones incluyen tráfico directo y orgánico, no solo pauta.</p>`;
+
+  /* semanas */
+  const sems = W.semanas;
+  const semDe = d => addDays(d, -dowOf(d));
+  const vt = {}, vu = {}; for (const r of SB) { if (!SB_PAGO(r)) continue; const w = semDe(r[0]); vt[w] = (vt[w] || 0) + 1; if (r[6] && CAMP_META.has(r[6])) vu[w] = (vu[w] || 0) + 1; }
+  linea($("#r-vsem"), sems, [{n: "Ventas totales", v: sems.map(w => vt[w] || 0), c: "var(--avance)", area: true}, {n: "Con UTM de pauta", v: sems.map(w => vu[w] || 0), c: "var(--web)"}]);
+  const cs = sems.map(w => { const g = CAMPS.reduce((a, c) => a + mcW(c, w).gasto, 0); return vt[w] ? g / vt[w] : 0; });
+  linea($("#r-csem"), sems, [{n: "Costo por venta", v: cs, c: "var(--accent)", area: true}]);
+
+  /* anuncios */
+  const top = (t, k) => aggMeta(ad => tipoCamp(ad.campana) === t ? ad.nombre : null).filter(a => a[k] > 0).sort((a, b) => b[k] - a[k]).slice(0, 3).map(a => ({...a, t, r: a[k]}));
+  const tops = [...top("web", "com"), ...top("wa", "conv")];
+  $("#r-ads").innerHTML = tops.map(a => { const ad = REP[a.k]; return `<a class="ad" href="${esc(ad.enlace)}" target="_blank" rel="noopener"><div class="img">${ad.img ? `<img src="${ad.img}" alt="" loading="lazy">` : "sin miniatura"}<span class="kind pill ${a.t}">${TIPO_N[a.t]}</span></div>
+    <div class="body"><span class="t">${esc(ad.nombre)}</span><div class="m"><span>${a.t === "web" ? "Compras" : "Conversaciones"}<b>${fmt(a.r)}</b></span><span>Costo c/u<b>${money(a.inv / a.r)}</b></span></div><span class="open">Ver anuncio ↗</span></div></a>`; }).join("") || `<p class="empty">Sin anuncios con resultados en el periodo.</p>`;
+}
+
+/* ════════════════ render ════════════════ */
+function render() {
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === S.tab));
+  ["resumen", "semanal", "kommo", "meta", "ga"].forEach(t => $("#p-" + t).hidden = t !== S.tab);
+  document.querySelectorAll(".det-only").forEach(e => e.hidden = S.tab === "semanal");
+  document.querySelectorAll(".sem-only").forEach(e => e.hidden = S.tab !== "semanal");
+  document.querySelectorAll(".kommo-only").forEach(e => e.hidden = S.tab !== "kommo");
+  if (S.desde > S.hasta) [S.desde, S.hasta] = [S.hasta, S.desde];
+  ({resumen: renderResumen, semanal: renderSemanal, kommo: renderKommo, meta: renderMeta, ga: renderGA})[S.tab]();
+}
+$("#gen").textContent = `Datos al ${fechaLarga(DATA.hoy)} · Kommo desde ${fechaLarga(DATA.kommo.primer_lead)}`;
+$("#gen").dataset.tip = "Última fecha de cada fuente:<br>" + Object.entries(DATA.frescura || {}).map(([n, d]) => `${n}: ${d ? fechaLarga(d) : "—"}`).join("<br>");
+$("#foot").innerHTML = `<span>Fuentes: Kommo API (leads, cambios de etapa y mensajes), Meta Marketing API (cuenta ${esc(DATA.meta.cuenta)}), Google Analytics 4 (propiedad ${esc(DATA.ga4.propiedad)}). Generado ${esc(DATA.generado)}.</span>
+  <span>Venta = lead que entró a Pago Realizado desde otra etapa. Los clientes migrados que nacieron en etapas de posventa (${fmt(DATA.kommo.leads.filter(l => l.mig).length)}) no cuentan como venta nueva, ni los ${fmt(DATA.kommo.leads.filter(l => l.pm).length)} leads movidos a cierre en bloque (${DATA.kommo.umbral_masivo}+ el mismo día). Monto estimado por formato: Digital $149, Físico $449.</span>`;
+preset("30");
+</script>
